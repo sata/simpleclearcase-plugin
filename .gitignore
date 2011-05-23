@@ -1,0 +1,7 @@
+work
+target
+.classpath
+.settings
+.project
+*~
+*.class

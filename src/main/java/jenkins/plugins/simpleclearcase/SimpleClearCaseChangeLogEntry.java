@@ -39,6 +39,7 @@ public class SimpleClearCaseChangeLogEntry extends ChangeLogSet.Entry {
 	private String comment;
 	private String operation;
 	private boolean isUnix;
+	private SimpleClearCaseChangeLogSet parent;
 	
 	public SimpleClearCaseChangeLogEntry(Date date, String user, String path, String version, 
 									String comment, String operation, boolean isUnix) {
@@ -89,6 +90,14 @@ public class SimpleClearCaseChangeLogEntry extends ChangeLogSet.Entry {
 		return User.get(user);
 	}
 
+	public SimpleClearCaseChangeLogSet getParent() {
+		return parent;
+	}
+	
+	public void setParent(SimpleClearCaseChangeLogSet set) {
+		this.parent = set;
+	}
+	
 	@Override
 	public Collection<String> getAffectedPaths() {
 		Collection<String> ret = new ArrayList<String>();

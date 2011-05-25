@@ -2,6 +2,10 @@ package jenkins.plugins.simpleclearcase.util;
 
 /**
  * @author etavsam
+ * 
+ * Currently the support or Windows is lacking as I have not intention on running Jenkins 
+ * in a Windows environment, though I took (some( consideration of how to do add windows 
+ * support in an fairly easy fashion. 
  *
  */
 public class OsUtil {

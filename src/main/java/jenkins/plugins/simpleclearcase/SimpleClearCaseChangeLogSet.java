@@ -14,8 +14,12 @@ public class SimpleClearCaseChangeLogSet extends hudson.scm.ChangeLogSet<SimpleC
 	protected SimpleClearCaseChangeLogSet(AbstractBuild<?, ?> build, List<SimpleClearCaseChangeLogEntry> entries) {
 		super(build);
 		this.entries = entries;
+		
+		for (SimpleClearCaseChangeLogEntry entry : entries) {
+			entry.setParent(this);
+		}
 	}
-
+	
 	/**
 	 * @return the latest commit date from all of the entries
 	 */

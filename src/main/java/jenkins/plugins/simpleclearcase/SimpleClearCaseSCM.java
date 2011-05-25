@@ -7,11 +7,13 @@ import java.util.Date;
 import java.util.List;
 
 import jenkins.plugins.simpleclearcase.SimpleClearCaseChangeLogSet;
+import jenkins.plugins.simpleclearcase.SimpleDynamicClearCaseSCM.Messages;
 import jenkins.plugins.simpleclearcase.util.DebugHelper;
 import jenkins.plugins.simpleclearcase.util.OsUtil;
 
 import org.jvnet.localizer.ResourceBundleHolder;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 
 import hudson.Extension;
 import hudson.FilePath;
@@ -26,6 +28,7 @@ import hudson.scm.PollingResult;
 import hudson.scm.SCMDescriptor;
 import hudson.scm.SCMRevisionState;
 import hudson.scm.SCM;
+import hudson.util.FormValidation;
 
 public class SimpleClearCaseSCM extends SCM {
 	
@@ -37,9 +40,8 @@ public class SimpleClearCaseSCM extends SCM {
 	public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
 
 	@DataBoundConstructor
-	public SimpleClearCaseSCM(String loadRules, String workspace, String viewname) {
+	public SimpleClearCaseSCM(String loadRules, String viewname) {
 		this.loadRules  = splitLoadRules(loadRules);
-		this.workspace  = workspace;
 		this.viewname   = viewname;
 	}
 	
@@ -103,7 +105,7 @@ public class SimpleClearCaseSCM extends SCM {
 		SimpleClearCaseChangeLogSet set = new SimpleClearCaseChangeLogSet(build, entries);
 		
 		//write down ChangeLogSet to file
-		return SimpleClearCaseChangeLogParser.WriteChangeLog(changelogFile, set);
+		return SimpleClearCaseChangeLogParser.writeChangeLog(changelogFile, set);
 	}
 	
 	@Override
@@ -113,15 +115,7 @@ public class SimpleClearCaseSCM extends SCM {
 	
 	@Override
 	public ChangeLogParser createChangeLogParser() {
-		// TODO This will parse the changelog.xml file
-		return null;
-	}
-
-	/**
-	 * @return
-	 */
-	public String getWorkspace() {
-		return workspace;
+		return new SimpleClearCaseChangeLogParser();
 	}
 	
 	/**
@@ -169,7 +163,36 @@ public class SimpleClearCaseSCM extends SCM {
 		 */
 		@Override
 		public String getDisplayName() {
-			return ResourceBundleHolder.get(SimpleClearCaseSCM.class).format("DisplayName");
+			return Messages.simpleclearcase_DisplayName();
+		}
+		
+		public FormValidation doCheckViewname(@QueryParameter String value) {
+			
+			if (value == null || value.trim().isEmpty() == true) {
+				return FormValidation.error(Messages.simpleclearcase_viewname_empty());
+			}
+			
+			if (value.contains(" ") == true) {
+				return FormValidation.error(Messages.simpleclearcase_viewname_whitespace());
+			}
+			
+			/* validation for windows is not implemented */
+			
+			return FormValidation.ok();
+		}
+		
+		public FormValidation doCheckLoadRules(@QueryParameter String value) {
+			if (value == null || value.trim().isEmpty() == true) {
+				return FormValidation.error(Messages.simpleclearcase_loadRules_empty());
+			}
+			
+			if (value.contains(" ") == true) {
+				return FormValidation.error(Messages.simpleclearcase_viewname_whitespace());
+			}
+			
+			/* validation for windows is not implemented */
+			
+			return FormValidation.ok();
 		}
 	}
 }

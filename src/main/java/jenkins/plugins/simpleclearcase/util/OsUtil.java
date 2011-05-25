@@ -21,12 +21,13 @@ public class OsUtil {
 			return WIN_PATH_SEPARATOR;
 	}
 	
-	public static String getNewline(boolean isUnix) {
-		if (isUnix == true)
-			return UNIX_NEWLINE;
-		else
-			return WIN_NEWLINE;
-	}
+//	this method isn't used, as we use String.format with %n to let line.separator handle the win/unix new line charachter
+//	public static String getNewline(boolean isUnix) {
+//		if (isUnix == true)
+//			return UNIX_NEWLINE;
+//		else
+//			return WIN_NEWLINE;
+//	}
 
 	/**
 	 * @param path

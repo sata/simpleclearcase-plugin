@@ -1,25 +1,26 @@
 package jenkins.plugins.simpleclearcase.util;
 
 import hudson.Launcher;
+import hudson.model.TaskListener;
 
 public class DebugHelper {
 	
 	/**
-	 * @param launcher
+	 * @param listener
 	 * @param format the formatted string specifying the message to be presented as error message
 	 *				 the method also appends appropiate newline seqence depending on OS.
 	 * @param args is an object array of arguments which has it's place in formatted string
 	 */
-	public static void error(Launcher launcher, String format, Object... args) {
-		launcher.getListener().error(format + OsUtil.getNewline(launcher.isUnix()), args);
+	public static void error(TaskListener listener, String format, Object... args) {
+		listener.error(format + "%n", args);
 	}
 	
 	/**
 	 * @param launcher
 	 * @param msg
 	 */
-	public static void error(Launcher launcher, String msg) {
-		launcher.getListener().error(msg);
+	public static void error(TaskListener listener, String msg) {
+		listener.error(msg);
 	}
 	
 	/**
@@ -27,15 +28,15 @@ public class DebugHelper {
 	 * @param format
 	 * @param args
 	 */
-	public static void info(Launcher launcher, String format, Object... args) {
-		launcher.getListener().getLogger().printf(format + OsUtil.getNewline(launcher.isUnix()), args);
+	public static void info(TaskListener listener, String format, Object... args) {
+		listener.getLogger().printf(format + "%n", args);
 	}
 	
 	/**
 	 * @param launcher
 	 * @param msg
 	 */
-	public static void info(Launcher launcher, String msg) {
-		launcher.getListener().getLogger().println(msg);
+	public static void info(TaskListener listener, String msg) {
+		listener.getLogger().println(msg);
 	}
 }

@@ -10,7 +10,6 @@ import jenkins.plugins.simpleclearcase.SimpleClearCaseChangeLogSet;
 import jenkins.plugins.simpleclearcase.util.DebugHelper;
 import jenkins.plugins.simpleclearcase.util.OsUtil;
 
-import org.jvnet.localizer.ResourceBundleHolder;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -32,7 +31,6 @@ import hudson.util.FormValidation;
 public class SimpleClearCaseSCM extends SCM {
 	
 	private List<String> loadRules;
-	private String workspace;
 	private String viewname;
 	
 	@Extension
@@ -48,12 +46,15 @@ public class SimpleClearCaseSCM extends SCM {
 	public SCMRevisionState calcRevisionsFromBuild(AbstractBuild<?, ?> build,
 			Launcher launcher, TaskListener listener) throws IOException,
 			InterruptedException {
-
+		
 		if (build == null) {
 			return null;
+		} else if (build.getChangeSet().isEmptySet() == true) {
+			// if the changeset is empty then we cant give any revision state
+			return null;
 		} else {
-			DebugHelper.info(launcher, "calcRevisionFromBuild - the build time is: %s", 
-																				build.getTime());
+			DebugHelper.info(listener, "calcRevisionFromBuild - the build time is: %s", 
+																				build.getTime().toString());
 			//fetch the latest commit date from the last build for comparison 
 			Date latestCommit = ((SimpleClearCaseChangeLogSet) build.getChangeSet()).getLatestCommitDate();
 			
@@ -67,21 +68,21 @@ public class SimpleClearCaseSCM extends SCM {
 			FilePath workspace, TaskListener listener, SCMRevisionState baseline)
 			throws IOException, InterruptedException {
 		
-		DebugHelper.info(launcher, "compareRemoteRevisionWith - testing");
+		DebugHelper.info(listener, "compareRemoteRevisionWith - testing");
 		
 		//if there is no baseline it means we haven't built before, hence build
 		if (baseline == null) {
 			return PollingResult.BUILD_NOW;
 		}
-		ClearTool ct = new ClearTool(launcher, workspace);
+		ClearTool ct = new ClearTool(launcher, listener, workspace);
 		
 		Date remoteRevisionDate = ct.getLatestCommitDate(getLoadRules()); 
 		
 		if (((SimpleClearCaseRevisionState) baseline).getBuiltTime().before(remoteRevisionDate)) {
-			DebugHelper.info(launcher, "compareRemoteRevisionWith - build now");
+			DebugHelper.info(listener, "compareRemoteRevisionWith - build now");
 			return PollingResult.BUILD_NOW;
 		} else { 
-			DebugHelper.info(launcher, "compareRemoteRevisionWith - no change");
+			DebugHelper.info(listener, "compareRemoteRevisionWith - no change");
 			return PollingResult.NO_CHANGES;
 		}
 	}
@@ -91,14 +92,20 @@ public class SimpleClearCaseSCM extends SCM {
 			FilePath workspace, BuildListener listener, File changelogFile)
 			throws IOException, InterruptedException {
 		
-		DebugHelper.info(launcher, "Checkout - start");		
-		ClearTool ct = new ClearTool(launcher, workspace);
+		DebugHelper.info(listener, "Checkout - start");		
+		ClearTool ct = new ClearTool(launcher, listener, workspace);
 		
-		SimpleClearCaseChangeLogSet previousChangeLogSet = (SimpleClearCaseChangeLogSet) build.getPreviousBuild().getChangeSet();
+		Date latestCommitDate = null;
+		
+		// we don't have a latest commit date as we haven't tracked the changelog due to the lack of previous builds.
+		if (build.getPreviousBuild() != null) {
+			//From the previous ChangeLogSet we will fetch the date, such that the lshistory output in ClearTool
+			//doesn't present information already reviewed
+			SimpleClearCaseChangeLogSet previousChangeLogSet = (SimpleClearCaseChangeLogSet) build.getPreviousBuild().getChangeSet();
+			latestCommitDate = previousChangeLogSet.getLatestCommitDate();
+		} 
 
-		//From the previous ChangeLogSet we will fetch the date, such that the lshistory output in ClearTool
-		//dosn't present information already reviewed
-		List<SimpleClearCaseChangeLogEntry> entries = ct.lshistory(getLoadRules(), previousChangeLogSet.getLatestCommitDate());
+		List<SimpleClearCaseChangeLogEntry> entries = ct.lshistory(getLoadRules(), latestCommitDate);
 		
 		//create the set with entries
 		SimpleClearCaseChangeLogSet set = new SimpleClearCaseChangeLogSet(build, entries);

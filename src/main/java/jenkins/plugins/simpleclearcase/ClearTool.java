@@ -11,7 +11,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -24,6 +23,7 @@ import org.jvnet.localizer.ResourceBundleHolder;
 
 import hudson.FilePath;
 import hudson.Launcher;
+import hudson.model.TaskListener;
 import hudson.util.ArgumentListBuilder;
 
 public class ClearTool {
@@ -46,10 +46,12 @@ public class ClearTool {
 	private static final String SINCE_DATE_FORMAT   		= "d-MMM-yy.HH:mm:ss'UTC'Z";
 
 	private Launcher launcher;
+	private TaskListener listener;
 	private FilePath workspace;
 	
-	public ClearTool(Launcher launcher, FilePath workspace) {
+	public ClearTool(Launcher launcher, TaskListener listener, FilePath workspace) {
 		this.launcher  = launcher;
+		this.listener  = listener;
 		this.workspace = workspace;
 	}
 	
@@ -132,7 +134,7 @@ public class ClearTool {
 			//a commit entry could be split over several lines hence we need to check for additional info
 			if (readline.startsWith(ADDED_FILE_ELEMENT)) {
 				if (currentEntry == null) {
-					DebugHelper.error(launcher, "CurrentEntry is null when a ADDED_FILE_ELEMENT popped up, " + 
+					DebugHelper.error(listener, "CurrentEntry is null when a ADDED_FILE_ELEMENT popped up, " + 
 																							"shouldn't happen.");
 				}
 				//with the formatting we have the ADDED_FILE_ELEMENT row wraps the filepath with quote.
@@ -148,7 +150,7 @@ public class ClearTool {
 			if (currentEntry != null) {
 				ret.add(currentEntry);
 			} else {
-				DebugHelper.error(launcher, "Could not parse entry from lshistory: %s", readline);
+				DebugHelper.error(listener, "Could not parse entry from lshistory: %s", readline);
 			}
 			readline = in.readLine();
 		}
@@ -160,7 +162,7 @@ public class ClearTool {
 		SimpleClearCaseChangeLogEntry ret = null;
 		
 		if (entries.size() > 1) {
-			DebugHelper.error(launcher, "LastLshistory call gave more entries than it should, loadrule: %s",
+			DebugHelper.error(listener, "LastLshistory call gave more entries than it should, loadrule: %s",
 																									loadRule);
 		} else if (entries.size() == 1) {
 			ret = entries.get(0);
@@ -192,7 +194,9 @@ public class ClearTool {
 		//since parameter isn't interesting if we only fetch the last entry
 		if (onlyLast == true) {
 			cmd.add(PARAM_LAST);
-		} else {
+		} else  if (since != null){
+			// if the date is null, there is no time bound on lshistory
+			// if it's the first build there isn't any previous date to take as starting point
 			cmd.add(PARAM_SINCE, fmt.format(since).toLowerCase());
 		}
 		
@@ -232,7 +236,7 @@ public class ClearTool {
 		if (ret != 0) {
 			String errMsg = String.format("ClearTool: Exit code wasn't ok, " + 
 											"code: %d. Tried to execute: %s", ret, cmd.toString());
-			DebugHelper.error(launcher, errMsg);
+			DebugHelper.error(listener, errMsg);
 			
 			throw new IOException(errMsg);
 		}
@@ -253,7 +257,7 @@ public class ClearTool {
 		try {
 			entryDate = fmt.parse(splitted[0]);
 		} catch (ParseException e) {
-			DebugHelper.error(launcher, "Cannot parse Date recieved from raw " + 
+			DebugHelper.error(listener, "Cannot parse Date recieved from raw " + 
 								"lshistory, date string: %s", splitted[0]);
 		}
 		

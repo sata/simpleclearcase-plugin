@@ -7,7 +7,6 @@ import java.util.Date;
 import java.util.List;
 
 import jenkins.plugins.simpleclearcase.SimpleClearCaseChangeLogSet;
-import jenkins.plugins.simpleclearcase.SimpleDynamicClearCaseSCM.Messages;
 import jenkins.plugins.simpleclearcase.util.DebugHelper;
 import jenkins.plugins.simpleclearcase.util.OsUtil;
 

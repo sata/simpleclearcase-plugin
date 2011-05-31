@@ -1,9 +1,17 @@
 package jenkins.plugins.simpleclearcase.util;
 
+import hudson.Util;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+
+import org.jvnet.localizer.ResourceBundleHolder;
 
 import jenkins.plugins.simpleclearcase.SimpleClearCaseChangeLogEntry;
+import jenkins.plugins.simpleclearcase.SimpleClearCaseSCM;
 
 public class DateUtil {
 
@@ -27,5 +35,18 @@ public class DateUtil {
 			}
 		}
 		return latest;
+	}
+	
+	public static Date parseDate(String date) {
+		Date ret;
+		SimpleDateFormat fmt = new SimpleDateFormat(Util.XS_DATETIME_FORMATTER.getPattern(), 
+				new Locale(ResourceBundleHolder.get(SimpleClearCaseSCM.class).format("Locale")));
+
+		try {
+			ret = fmt.parse(date);
+		} catch (ParseException e) {
+			ret = null;
+		}
+		return ret;
 	}
 }

@@ -31,6 +31,10 @@ public class SimpleClearCaseChangeLogSet extends hudson.scm.ChangeLogSet<SimpleC
 		return entries.iterator();
 	}
 
+	public List<SimpleClearCaseChangeLogEntry> getEntries() {
+		return entries;
+	}
+	
 	@Override
 	public boolean isEmptySet() {
 		return entries.isEmpty();

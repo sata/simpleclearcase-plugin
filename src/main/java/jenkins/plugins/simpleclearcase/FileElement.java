@@ -14,28 +14,33 @@ public class FileElement {
 	
 	private FilePath filePath;
 	private String version;
-	private boolean isUnix;
 	
-	public FileElement(String path, String version, boolean isUnix) {
-		this.filePath = new FilePath(new File(path));
+	public FileElement() {
+		
+	}
+	
+	public FileElement(String path, String version) {
+		setFilePath(path);
 		this.version  = version;
-		this.isUnix   = isUnix;
 	}
 
-	public FileElement(String path, boolean isUnix) {
-		this(path, INIT_VERSION, isUnix);
+	public FileElement(String path) {
+		this(path, INIT_VERSION);
 	}
-	
 	
 	public FilePath getFilePath() {
 		return filePath;
 	}
-
+	
+	public void setFilePath(String path) {
+		this.filePath = new FilePath(new File(path));
+	}
+	
 	public String getVersion() {
 		return version;
 	}
 	
-	public boolean isUnix() {
-		return isUnix;
+	public void setVersion(String version) {
+		this.version = version;
 	}
 }

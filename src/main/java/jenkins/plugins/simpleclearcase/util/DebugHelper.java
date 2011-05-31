@@ -1,6 +1,5 @@
 package jenkins.plugins.simpleclearcase.util;
 
-import hudson.Launcher;
 import hudson.model.TaskListener;
 
 public class DebugHelper {

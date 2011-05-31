@@ -3,6 +3,7 @@ package jenkins.plugins.simpleclearcase;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -30,7 +31,9 @@ import hudson.util.FormValidation;
 
 public class SimpleClearCaseSCM extends SCM {
 	
-	private List<String> loadRules;
+	public final static int CHANGELOGSET_ORDER = SimpleClearCaseChangeLogEntryDateComparator.DECREASING;
+	
+	private String loadRules;
 	private String viewname;
 	
 	@Extension
@@ -38,7 +41,7 @@ public class SimpleClearCaseSCM extends SCM {
 
 	@DataBoundConstructor
 	public SimpleClearCaseSCM(String loadRules, String viewname) {
-		this.loadRules  = splitLoadRules(loadRules);
+		this.loadRules  = loadRules;
 		this.viewname   = viewname;
 	}
 	
@@ -74,11 +77,12 @@ public class SimpleClearCaseSCM extends SCM {
 		if (baseline == null) {
 			return PollingResult.BUILD_NOW;
 		}
-		ClearTool ct = new ClearTool(launcher, listener, workspace);
+		ClearTool ct = new ClearTool(launcher, listener, workspace, viewname);
+		Date baselineBuiltTime = ((SimpleClearCaseRevisionState) baseline).getBuiltTime();
 		
-		Date remoteRevisionDate = ct.getLatestCommitDate(getLoadRules()); 
+		Date remoteRevisionDate = ct.getLatestCommitDate(getLoadRulesAsList(), baselineBuiltTime); 
 		
-		if (((SimpleClearCaseRevisionState) baseline).getBuiltTime().before(remoteRevisionDate)) {
+		if (baselineBuiltTime.before(remoteRevisionDate)) {
 			DebugHelper.info(listener, "compareRemoteRevisionWith - build now");
 			return PollingResult.BUILD_NOW;
 		} else { 
@@ -93,30 +97,33 @@ public class SimpleClearCaseSCM extends SCM {
 			throws IOException, InterruptedException {
 		
 		DebugHelper.info(listener, "Checkout - start");		
-		ClearTool ct = new ClearTool(launcher, listener, workspace);
+		ClearTool ct = new ClearTool(launcher, listener, workspace, viewname);
 		
 		Date latestCommitDate = null;
 		
 		// we don't have a latest commit date as we haven't tracked the changelog due to the lack of previous builds.
-		if (build.getPreviousBuild() != null) {
+		if (build.getPreviousBuild() != null && build.getPreviousBuild().getChangeSet().isEmptySet() == false) {
+
 			//From the previous ChangeLogSet we will fetch the date, such that the lshistory output in ClearTool
 			//doesn't present information already reviewed
 			SimpleClearCaseChangeLogSet previousChangeLogSet = (SimpleClearCaseChangeLogSet) build.getPreviousBuild().getChangeSet();
 			latestCommitDate = previousChangeLogSet.getLatestCommitDate();
 		} 
 
-		List<SimpleClearCaseChangeLogEntry> entries = ct.lshistory(getLoadRules(), latestCommitDate);
+		List<SimpleClearCaseChangeLogEntry> entries = ct.lshistory(getLoadRulesAsList(), latestCommitDate);
+		
+		//sort the entries according to 'setting'
+		Collections.sort(entries, new SimpleClearCaseChangeLogEntryDateComparator(SimpleClearCaseSCM.CHANGELOGSET_ORDER));
 		
 		//create the set with entries
 		SimpleClearCaseChangeLogSet set = new SimpleClearCaseChangeLogSet(build, entries);
 		
-		//write down ChangeLogSet to file
-		return SimpleClearCaseChangeLogParser.writeChangeLog(changelogFile, set);
+		return SimpleClearCaseChangeLogParser.writeChangeLog(changelogFile, set, listener);
 	}
 	
 	@Override
 	public boolean requiresWorkspaceForPolling() {
-		return false;
+		return true;
 	}
 	
 	@Override
@@ -131,10 +138,14 @@ public class SimpleClearCaseSCM extends SCM {
 		return viewname;
 	}
 
-	public List<String> getLoadRules() {
+	public String getLoadRules() {
 		return loadRules;
 	}
 
+	public List<String> getLoadRulesAsList() {
+		return splitLoadRules(loadRules);
+	}
+	
 	/**
 	 * @param lr
 	 * @return

@@ -7,7 +7,6 @@ import java.util.List;
 
 import hudson.model.User;
 import hudson.scm.ChangeLogSet;
-import jenkins.plugins.simpleclearcase.util.OsUtil;
 
 /**
  * @author etavsam
@@ -30,7 +29,9 @@ public class SimpleClearCaseChangeLogEntry extends ChangeLogSet.Entry {
 	 *  %c  - Comment
 	 *    
 	 */
-	public static final String LSHISTORY_FORMATTING = "'\"%Nd\" \"%u\" \"%En\" \"%Vn\" \"%e\" \"%o\" \n%c\n'";
+	// we would add an extra single quotes around the string, but as the formatting contains white space
+	// the ArgumentListBuilder will automatically quote this for us, double quoting would cause it to break down.
+	public static final String LSHISTORY_FORMATTING = "%Nd\" \"%u\" \"%En\" \"%Vn\" \"%e\" \"%o\" \"%Nc\n";
 	
 	private Date date;
 	private String user;
@@ -38,18 +39,25 @@ public class SimpleClearCaseChangeLogEntry extends ChangeLogSet.Entry {
 	private String version;
 	private String comment;
 	private String operation;
-	private boolean isUnix;
+
 	private SimpleClearCaseChangeLogSet parent;
 	
-	public SimpleClearCaseChangeLogEntry(Date date, String user, String path, String version, 
-									String comment, String operation, boolean isUnix) {
+	public SimpleClearCaseChangeLogEntry() {
+		//Default constructor is needed for Digester XML-parser
+	}
+	
+	public SimpleClearCaseChangeLogEntry(Date date, String user, String version, String comment, 
+										String operation) {
 		this.date      = date;
 		this.user      = user;
 		this.version   = version;
 		this.comment   = comment;
 		this.operation = operation;
-		this.isUnix    = isUnix;
-		
+	}
+	
+	public SimpleClearCaseChangeLogEntry(Date date, String user, String path, String version, 
+									String comment, String operation) {
+		this (date, user, version, comment, operation);
 		this.addPath(path);
 	}
 
@@ -57,27 +65,43 @@ public class SimpleClearCaseChangeLogEntry extends ChangeLogSet.Entry {
 		return date;
 	}
 	
+	public void setDate(Date date) {
+		this.date = date;
+	}
+	
 	public void addPath(String path) {
-		elements.add(new FileElement(path, isUnix));
+		elements.add(new FileElement(path));
 	}
 	public String getUser() {
 		return user;
 	}
 		
+	public void setUser(String user) {
+		this.user = user;
+	}
+	
 	public String getVersion() {
 		return version;
+	}
+	
+	public void setVersion(String version) {
+		this.version = version;
 	}
 	
 	public String getComment() {
 		return comment;
 	}
 	
+	public void setComment(String comment) {
+		this.comment = comment;
+	}
+	
 	public String getOperation() {
 		return operation;
 	}
 	
-	public boolean isUnix() {
-		return isUnix;
+	public void setOperation(String operation) {
+		this.operation = operation;
 	}
 	
 	@Override
@@ -105,25 +129,5 @@ public class SimpleClearCaseChangeLogEntry extends ChangeLogSet.Entry {
 			ret.add(e.getFilePath().getRemote());
 		}
 		return ret;
-	}
-	
-	/**
-	 * @param filePath
-	 * @param isUnix
-	 * @return the filename from path with the convention of unix
-	 */
-	public static String getName(String filePath, boolean isUnix) {
-		int index = filePath.lastIndexOf(OsUtil.getPathSeparator(isUnix));
-		return filePath.substring(index + 1);
-	}
-
-	/**
-	 * @param filePath
-	 * @param isUnix
-	 * @return the path without the filename without trailing slash
-	 */
-	public static String getPath(String filePath, boolean isUnix) {
-		int index = filePath.lastIndexOf(OsUtil.getPathSeparator(isUnix));
-		return filePath.substring(0, index);
 	}
 }

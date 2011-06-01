@@ -71,17 +71,24 @@ public class SimpleClearCaseSCM extends SCM {
 			FilePath workspace, TaskListener listener, SCMRevisionState baseline)
 			throws IOException, InterruptedException {
 		
-		DebugHelper.info(listener, "compareRemoteRevisionWith - testing");
-		
 		//if there is no baseline it means we haven't built before, hence build
 		if (baseline == null) {
+			DebugHelper.info(listener, "compareRemoteRevisionWith - there is no baseline, BUILD_NOW");
 			return PollingResult.BUILD_NOW;
 		}
 		ClearTool ct = new ClearTool(launcher, listener, workspace, viewname);
 		Date baselineBuiltTime = ((SimpleClearCaseRevisionState) baseline).getBuiltTime();
+		DebugHelper.info(listener, "compareRemoteRevisionWith - baseline time is: " + baselineBuiltTime);
 		
 		Date remoteRevisionDate = ct.getLatestCommitDate(getLoadRulesAsList(), baselineBuiltTime); 
 		
+		// meaning that there are no more entries from the time of last build, hence we don't build
+		if (remoteRevisionDate == null) {
+			DebugHelper.info(listener, "compareRemoteRevisionWith - remote revision date time is null");
+			return PollingResult.NO_CHANGES;
+		}
+		
+		DebugHelper.info(listener, "compareRemoteRevisionWith - remote revision date time is: " + baselineBuiltTime);
 		if (baselineBuiltTime.before(remoteRevisionDate)) {
 			DebugHelper.info(listener, "compareRemoteRevisionWith - build now");
 			return PollingResult.BUILD_NOW;

@@ -14,7 +14,9 @@ import jenkins.plugins.simpleclearcase.SimpleClearCaseChangeLogEntry;
 import jenkins.plugins.simpleclearcase.SimpleClearCaseSCM;
 
 public class DateUtil {
-
+	private static final String DATETIME_FORMAT= "yyyy-MM-dd'T'HH:mm:ss'Z";
+	private static final SimpleDateFormat DATETIME_FORMATTER = new SimpleDateFormat(DATETIME_FORMAT,
+									new Locale(ResourceBundleHolder.get(SimpleClearCaseSCM.class).format("Locale")));
 	/**
 	 * @param entries a list of ChangeLogEntry
 	 * @return the latest commit date from a entry in entries, if entries is empty 
@@ -37,13 +39,15 @@ public class DateUtil {
 		return latest;
 	}
 	
+	public static String formatDate(Date date) {
+		return DATETIME_FORMATTER.format(date);
+	}
+	
 	public static Date parseDate(String date) {
 		Date ret;
-		SimpleDateFormat fmt = new SimpleDateFormat(Util.XS_DATETIME_FORMATTER.getPattern(), 
-				new Locale(ResourceBundleHolder.get(SimpleClearCaseSCM.class).format("Locale")));
-
+		
 		try {
-			ret = fmt.parse(date);
+			ret = DATETIME_FORMATTER.parse(date);
 		} catch (ParseException e) {
 			ret = null;
 		}

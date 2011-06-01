@@ -73,7 +73,7 @@ public class SimpleClearCaseChangeLogParser extends ChangeLogParser {
 			entry.setAttribute(OPERATION, e.getOperation());
 
 			Element date = doc.createElement(DATE);
-			date.setTextContent(Util.XS_DATETIME_FORMATTER.format(e.getDate()));
+			date.setTextContent(DateUtil.formatDate(e.getDate()));
 						
 			Element user = doc.createElement(USER);
 			user.setTextContent(e.getUser());

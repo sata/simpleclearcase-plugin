@@ -1,6 +1,5 @@
 package jenkins.plugins.simpleclearcase.util;
 
-import hudson.Util;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -14,8 +13,8 @@ import jenkins.plugins.simpleclearcase.SimpleClearCaseChangeLogEntry;
 import jenkins.plugins.simpleclearcase.SimpleClearCaseSCM;
 
 public class DateUtil {
-	private static final String DATETIME_FORMAT= "yyyy-MM-dd'T'HH:mm:ss'Z";
-	private static final SimpleDateFormat DATETIME_FORMATTER = new SimpleDateFormat(DATETIME_FORMAT,
+	private static final String DATETIME_FORMAT= "yyyy-MM-dd'T'HH:mm:ssZ";
+	private static SimpleDateFormat DATETIME_FORMATTER = new SimpleDateFormat(DATETIME_FORMAT,
 									new Locale(ResourceBundleHolder.get(SimpleClearCaseSCM.class).format("Locale")));
 	/**
 	 * @param entries a list of ChangeLogEntry

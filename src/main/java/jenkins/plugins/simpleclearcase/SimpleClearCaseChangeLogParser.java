@@ -1,6 +1,5 @@
 package jenkins.plugins.simpleclearcase;
 
-import hudson.Util;
 import hudson.model.TaskListener;
 import hudson.model.AbstractBuild;
 import hudson.scm.ChangeLogParser;

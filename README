@@ -1,5 +1,3 @@
-WORK IN PROGRESS, the plugin isn't finished.
-
 This plugin interfaces Jenkins against a dynamic base view, Clearcase SCM. Its 'Simple' in the sense of feature availability, you don't set up the view inside of the Jenkins plugin, rather depending on your environment you create and update the view according to your need. The Plugin uses that view to keeping tabs on SCM changes.
 
 As the view is dynamic, the plugin doesn't take any snapshots of the source code, the checkout mechanism will only review the clear tool lshistory over the specified 'load rules'. The load rules are in simple terms only paths inside of the view to specific code bases. 

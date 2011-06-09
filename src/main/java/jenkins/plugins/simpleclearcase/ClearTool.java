@@ -25,6 +25,10 @@ import hudson.Launcher;
 import hudson.model.TaskListener;
 import hudson.util.ArgumentListBuilder;
 
+/**
+ * @author etavsam
+ *
+ */
 public class ClearTool {
 	
 	private static final String ADDED_FILE_ELEMENT_QUOTATION = "\"";
@@ -33,14 +37,14 @@ public class ClearTool {
 	private static final String CLEARTOOL = "cleartool";
 	private static final String LSVIEW    = "lsview"; 
 	private static final String LSHISTORY = "lshistory";
+	private static final String SETVIEW   = "setview";
 	
-	private static final String PARAM_TAG     = "-tag";
 	private static final String PARAM_SINCE   = "-since";
 	private static final String PARAM_FMT     = "-fmt";
 	private static final String PARAM_NCO     = "-nco";
 	private static final String PARAM_RECURSE = "-recurse";
+	private static final String PARAM_EXEC    = "-exec";
 	
-	private static final String LSHISTORY_SPLIT_SEQUENCE	= "\" \"";
 	private static final String LSHISTORY_ENTRY_DATE_FORMAT = "yyyyMMdd.HHmmss";
 	private static final String SINCE_DATE_FORMAT   		= "d-MMM-yy.HH:mm:ss'UTC'Z";
 
@@ -49,18 +53,25 @@ public class ClearTool {
 	private FilePath workspace;
 	private String viewname;
 	
-	public ClearTool(Launcher launcher, TaskListener listener, FilePath workspace, String viewname) {
+	public ClearTool(Launcher launcher, TaskListener listener, FilePath workspace, String viewname) throws InterruptedException, IOException {
 		this.launcher  = launcher;
 		this.listener  = listener;
 		this.workspace = workspace;
-		this.viewname  = viewname;
+		this.viewname  = viewname.trim();
+		
+		if (doesViewExist(this.viewname) == false) {
+			String msg = String.format("View wasn't found! Viewname: %s", viewname);
+			DebugHelper.fatalError(listener, msg); 
+		
+			throw new IOException(msg);
+		}
 	}
 	
 	public boolean doesViewExist(String viewTag) throws InterruptedException {
 		ArgumentListBuilder cmd = new ArgumentListBuilder();
 		
 		cmd.add(LSVIEW);
-		cmd.add(PARAM_TAG, viewTag);
+		cmd.add(viewTag);
 
 		try {
 			execute(cmd);
@@ -102,7 +113,7 @@ public class ClearTool {
 	}
 	
 	/**
-	 * @param filePath
+	 * @param filePath a specific file path	 which we want to fetch commit changes from SCM.
 	 * @param since
 	 * @return a list of ChangeLog entries, parsed from the rawLshistory
 	 * 
@@ -118,7 +129,6 @@ public class ClearTool {
 		SimpleClearCaseChangeLogEntry currentEntry  = null;
 		
 		while (readline != null) {
-			
 			//a commit entry could be split over several lines hence we need to check for additional info
 			if (readline.startsWith(ADDED_FILE_ELEMENT)) {
 				if (currentEntry == null) {
@@ -138,7 +148,7 @@ public class ClearTool {
 			if (currentEntry != null) {
 				ret.add(currentEntry);
 			} else {
-				DebugHelper.error(listener, "Could not parse entry from lshistory: %s", readline);
+				DebugHelper.error(listener, "Wasn't able to parse row, hence we skip it, line: %s", readline);
 			}
 			readline = in.readLine();
 		}
@@ -162,7 +172,6 @@ public class ClearTool {
 		fmt.setTimeZone(TimeZone.getTimeZone(
 					ResourceBundleHolder.get(SimpleClearCaseSCM.class).format("TimeZone")));
 
-		cmd.add(CLEARTOOL);
 		cmd.add(LSHISTORY);
 		cmd.add(PARAM_RECURSE);
 
@@ -178,7 +187,7 @@ public class ClearTool {
 		cmd.add(filePath);
 		
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		execute(cmd, baos);
+		executeWithView(cmd, baos);
 		
 		Reader ret = new InputStreamReader(new ByteArrayInputStream(baos.toByteArray()));
 		baos.close();
@@ -187,46 +196,87 @@ public class ClearTool {
 	}
 
 	/**
-	 * 
-	 * @param cmd the commands we want to run against ClearCase
-	 * @return a wrapped version of the ArgumentListBuilder which executes the given cmd against 
-	 * ClearCase with the viewname recieved from the SCM plugin.
-	 * 
-	 *  Example on the 'wrapping': cmd lshistory /some/vob/somefile,
+	 * @param cmd the command set which needs to be padded according to needsView and executing program
+	 * @param needsView
+	 * @return
 	 */
-	private static ArgumentListBuilder wrapCommandsWithSetView(ArgumentListBuilder cmd) {
-		return null;
-	}
-	private boolean execute(ArgumentListBuilder cmd) throws IOException, InterruptedException {
-		return execute(cmd, null, null);
-	}
-	
-	private boolean execute(ArgumentListBuilder cmd, OutputStream out) throws IOException, InterruptedException {
-		return execute(cmd, null, out);
-	}
-	
-	private boolean execute(ArgumentListBuilder cmd, FilePath workDir, OutputStream out) throws IOException, InterruptedException {
+	private ArgumentListBuilder appendOptions(ArgumentListBuilder cmd, boolean needsView) {
+		//if we get null or empty command set we return null as well
+		if (cmd == null || cmd.toList().size() < 1) {
+			return null;
+		}
+		ArgumentListBuilder ret = null;
 		
+		//we need to add setview with exec call as prefix if a view is needed
+		if (needsView == true) {
+			ret = new ArgumentListBuilder();
+
+			ret.add(CLEARTOOL);
+			ret.add(SETVIEW);
+			ret.add(PARAM_EXEC);
+			ret.add(cmd.prepend(CLEARTOOL).toStringWithQuote());
+			ret.add(this.viewname);
+		} else {
+			//if we don't need a view to execute we just prepend with cleartool
+			ret = cmd.prepend(CLEARTOOL);
+		}
+		return ret;
+	}
+	
+	/**
+	 * @param cmd 
+	 * @return true if command was successfully executed
+	 * @throws IOException thrown if return code is above 0
+	 * @throws InterruptedException
+	 */
+	private boolean execute(ArgumentListBuilder cmd) throws IOException, InterruptedException {
+		return execute(cmd, null, null, false);
+	}
+	
+	/**
+	 * @param cmd
+	 * @param out output from executed command is pushed to this stream
+	 * @return true if command was successfully executed
+	 * @throws IOException if return code of process is above 0
+	 * @throws InterruptedException
+	 */
+	private boolean executeWithView(ArgumentListBuilder cmd, OutputStream out) throws IOException, InterruptedException {
+		return execute(cmd, null, out, true);
+	}
+	
+	/**
+	 * @param cmd
+	 * @param workDir where we execute the command from
+	 * @param out output from executed command is pushed to this steram
+	 * @param setView we set the given view if this is true
+	 * @return true if command was successfully executed
+	 * @throws IOException if return code of process is above 0
+	 * @throws InterruptedException 
+	 */
+	private boolean execute(ArgumentListBuilder cmd, FilePath workDir, OutputStream out, boolean needsView) throws IOException, InterruptedException {
 		if (workDir == null) {
 			workDir = workspace;
 		}
-		
-		Launcher.ProcStarter procStarter = this.launcher.launch();
-		//setting ProcStarter properties
+		//append neccessary flags and command for execution
+		cmd = appendOptions(cmd, needsView);
 
-		procStarter = procStarter.cmds(cmd).pwd(workDir).stdout(out);
+		//setting ProcStarter properties
+		Launcher.ProcStarter procStarter = this.launcher.launch().cmds(cmd).pwd(workDir);
 		
-		int ret = procStarter.join();	
+		if (out != null) {
+			procStarter = procStarter.stdout(out);
+		}
+		int ret = procStarter.join();
 		
 		if (ret != 0) {
 			String errMsg = String.format("ClearTool: Exit code wasn't ok, " + 
-											"code: %d. Tried to execute: %s", ret, cmd.toStringWithQuote());
+											"code: %d. Tried to execute: %s", ret, cmd);
 			DebugHelper.error(listener, errMsg);
 			
 			if (out != null) {
+				out.flush();
 				out.close();
 			}
-			
 			throw new IOException(errMsg);
 		}
 		return true;
@@ -238,19 +288,19 @@ public class ClearTool {
 					new Locale(ResourceBundleHolder.get(SimpleClearCaseSCM.class).format("Locale")));
 
 		//see the ChangeLogEntry.LSHISTORY_FORMATTING for details regarding parameters in one entry		
-		String[] splitted = readline.split(LSHISTORY_SPLIT_SEQUENCE);
-
+		String[] splitted = readline.split(SimpleClearCaseChangeLogEntry.LSHISTORY_SPLIT_SEQUENCE);
+		
 		Date entryDate = null;
 		
 		try {
 			entryDate = fmt.parse(splitted[0]);
 		} catch (ParseException e) {
-			DebugHelper.error(listener, "Cannot parse Date recieved from raw " + 
-								"lshistory, date string: %s", splitted[0]);
+			//if we cannot parse the date then the whole entry will be irrelevant and we just return null
+			//calling method will log the line
 		}
 
 		if (entryDate == null) {
-			return null; //if we cannot parse the date then the whole entry will be irrelevant 
+			return null; 
 		}
 		
 		//the constructor of ChangeLogEntry follows LSHISTORY_FORMATTING parameter order

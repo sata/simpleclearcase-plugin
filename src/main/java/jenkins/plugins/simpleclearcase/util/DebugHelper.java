@@ -13,6 +13,14 @@ public class DebugHelper {
 	public static void error(TaskListener listener, String format, Object... args) {
 		listener.error(format + "%n", args);
 	}
+
+	/**
+	 * @param listener
+	 * @param msg
+	 */
+	public static void fatalError(TaskListener listener, String msg) {
+		listener.fatalError(msg);
+	}
 	
 	/**
 	 * @param launcher

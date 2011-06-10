@@ -1,4 +1,4 @@
-
+<!-- this presents quick summary under status page--> 
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
   <j:choose>
     <j:when test="${it.emptySet}">
@@ -9,7 +9,23 @@
       <ol>
         <j:forEach var="cs" items="${it.items}" varStatus="loop">
           <li>
-            ${cs.msgAnnotated} (<a href="changes#detail${loop.index}">detail</a>)
+          	<b>${cs.date} <br/>
+          	${cs.operation}: ${%Version} ${cs.version} by <a href="${rootURL}/${cs.author.url}/">${cs.author}</a>: </b> ${cs.msgAnnotated}
+            <br/>
+			
+			<!-- add edittypes later on
+			<j:forEach var="item" items="${cs.items}">
+        		<tr>
+          			<td><t:editTypeIcon type="${item.editType}" /></td>
+          			<td>${item.path}</td>
+        		</tr>
+      		</j:forEach>
+            -->
+
+            <j:forEach var="path" items="${cs.affectedPaths}">
+				${path}<br/>
+			</j:forEach>
+            (<a href="changes#detail${loop.index}">detail</a>)
           </li>
         </j:forEach>
       </ol>

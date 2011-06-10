@@ -1,3 +1,4 @@
+<!-- this persents the summary -->
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
   <h2>${%Summary}</h2>
   <ol>
@@ -12,18 +13,26 @@
           <a name="detail${loop.index}"></a>
           <div class="changeset-message">
             <b>
+              ${cs.date}<br/>
               ${%Version} ${cs.version} by <a href="${rootURL}/${cs.author.url}/">${cs.author}</a>:
-            </b><br/>
+              ${%Op}: ${cs.operation}, ${%EventDesc}: ${cs.eventDescription}
+            </b> <br/>
             ${cs.msgAnnotated}
           </div>
         </td>
       </tr>
-      <j:forEach var="item" items="${cs.items}">
+      <j:forEach var="path" items="${cs.affectedPaths}">
+        <tr>
+          <td>${path}</td>
+        </tr>
+      </j:forEach>
+      
+      <!-- <j:forEach var="item" items="${cs.items}">
         <tr>
           <td><t:editTypeIcon type="${item.editType}" /></td>
           <td>${item.path}</td>
         </tr>
-      </j:forEach>
+      </j:forEach>-->
     </j:forEach>
   </table>
 </j:jelly>

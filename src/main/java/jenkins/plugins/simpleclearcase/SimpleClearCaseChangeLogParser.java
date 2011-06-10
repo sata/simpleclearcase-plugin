@@ -40,15 +40,16 @@ public class SimpleClearCaseChangeLogParser extends ChangeLogParser {
 	private static final String XML_INDENT_SPACE		 = "2";
 	private static final String XML_INDENT_SPACE_SETTING = "{http://xml.apache.org/xslt}indent-amount";
 	
-	private static final String CHANGELOG = "changelog";
-	private static final String VERSION   = "version";
-	private static final String DATE	  = "date";
-	private static final String ENTRY     = "entry";
-	private static final String USER	  = "user";
-	private static final String COMMENT   = "comment";
-	private static final String ITEMS     = "items";
-	private static final String ITEM	  = "item";
-	private static final String OPERATION = "operation";
+	private static final String CHANGELOG   	  = "changelog";
+	private static final String VERSION 		  = "version";
+	private static final String DATE			  = "date";
+	private static final String ENTRY   		  = "entry";
+	private static final String USER			  = "user";
+	private static final String COMMENT 		  = "comment";
+	private static final String ITEMS   		  = "items";
+	private static final String ITEM			  = "item";
+	private static final String OPERATION   	  = "operation";
+	private static final String EVENT_DESCRIPTION = "eventdescription";
 	
 	public static boolean writeChangeLog(File file, SimpleClearCaseChangeLogSet set, TaskListener listener) throws IOException {
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -68,9 +69,6 @@ public class SimpleClearCaseChangeLogParser extends ChangeLogParser {
 		for (SimpleClearCaseChangeLogEntry e : set.getEntries()) {
 			Element entry = doc.createElement(ENTRY);
 		
-			entry.setAttribute(VERSION, e.getVersion());
-			entry.setAttribute(OPERATION, e.getOperation());
-
 			Element date = doc.createElement(DATE);
 			date.setTextContent(DateUtil.formatDate(e.getDate()));
 						
@@ -79,8 +77,16 @@ public class SimpleClearCaseChangeLogParser extends ChangeLogParser {
 		
 			Element comment = doc.createElement(COMMENT);
 			comment.setTextContent(e.getComment());
-		
 
+			Element version = doc.createElement(VERSION);
+			version.setTextContent(e.getVersion());
+			
+			Element operation = doc.createElement(OPERATION);
+			operation.setTextContent(e.getOperation());
+
+			Element eventDescription = doc.createElement(EVENT_DESCRIPTION);
+			eventDescription.setTextContent(e.getEventDescription());
+			
 			Element items = doc.createElement(ITEMS);
 			// FIXME when changing Entry such that file elements contain versions then this must be also changed		
 			for (String filePath : e.getAffectedPaths()) {
@@ -91,6 +97,9 @@ public class SimpleClearCaseChangeLogParser extends ChangeLogParser {
 			
 			entry.appendChild(date);
 			entry.appendChild(user);
+			entry.appendChild(operation);
+			entry.appendChild(eventDescription);
+			entry.appendChild(version);
 			entry.appendChild(comment);
 			entry.appendChild(items);
 			
@@ -138,15 +147,16 @@ public class SimpleClearCaseChangeLogParser extends ChangeLogParser {
 		for (int i = 0; i < entries.getLength(); i++) {
 			Element elemEntry = (Element) entries.item(i);
 			
-			String date 	 = elemEntry.getElementsByTagName(DATE).item(0).getTextContent();
-			String user 	 = elemEntry.getElementsByTagName(USER).item(0).getTextContent();
-			String comment   = elemEntry.getElementsByTagName(COMMENT).item(0).getTextContent();
-			String operation = elemEntry.getAttribute(OPERATION);
-			String version   = elemEntry.getAttribute(VERSION);
+			String date 			= elemEntry.getElementsByTagName(DATE).item(0).getTextContent();
+			String user 			= elemEntry.getElementsByTagName(USER).item(0).getTextContent();
+			String version  		= elemEntry.getElementsByTagName(VERSION).item(0).getTextContent();
+			String operation		= elemEntry.getElementsByTagName(OPERATION).item(0).getTextContent();
+			String eventDescription = elemEntry.getElementsByTagName(EVENT_DESCRIPTION).item(0).getTextContent();
+			String comment  		= elemEntry.getElementsByTagName(COMMENT).item(0).getTextContent();
 			
 			//we create the entry without any file path reference
-			SimpleClearCaseChangeLogEntry entry = new SimpleClearCaseChangeLogEntry(DateUtil.parseDate(date), 
-																		user, version, comment, operation);
+			SimpleClearCaseChangeLogEntry entry = new SimpleClearCaseChangeLogEntry(DateUtil.parseDate(date), user,
+																		version, eventDescription, operation, comment);
 			//adding all available file paths to entry
 			addFilePathsToEntry(elemEntry.getElementsByTagName(ITEMS), entry);
 			

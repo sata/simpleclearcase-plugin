@@ -43,27 +43,28 @@ public class SimpleClearCaseChangeLogEntry extends ChangeLogSet.Entry {
 	private String user;
 	private List<FileElement> elements = new ArrayList<FileElement>();
 	private String version;
-	private String comment;
+	private String eventDescription;
 	private String operation;
-
+	private String comment;
 	private SimpleClearCaseChangeLogSet parent;
 	
 	public SimpleClearCaseChangeLogEntry() {
 		//Default constructor is needed for Digester XML-parser
 	}
 	
-	public SimpleClearCaseChangeLogEntry(Date date, String user, String version, String comment, 
-										String operation) {
-		this.date      = date;
-		this.user      = user;
-		this.version   = version;
-		this.comment   = comment;
-		this.operation = operation;
+	public SimpleClearCaseChangeLogEntry(Date date, String user, String version, String eventDescription, 
+																		String operation, String comment) {
+		this.date   		  = date;
+		this.user   		  = user;
+		this.version		  = version;
+		this.eventDescription = eventDescription;
+		this.operation  	  = operation;
+		this.comment		  = comment;
 	}
 	
 	public SimpleClearCaseChangeLogEntry(Date date, String user, String path, String version, 
-									String comment, String operation) {
-		this (date, user, version, comment, operation);
+									String eventDescription, String operation, String comment) {
+		this(date, user, version, eventDescription, operation, comment);
 		this.addPath(path);
 	}
 
@@ -94,20 +95,28 @@ public class SimpleClearCaseChangeLogEntry extends ChangeLogSet.Entry {
 		this.version = version;
 	}
 	
-	public String getComment() {
-		return comment;
-	}
-	
-	public void setComment(String comment) {
-		this.comment = comment;
-	}
-	
 	public String getOperation() {
 		return operation;
 	}
 	
 	public void setOperation(String operation) {
 		this.operation = operation;
+	}
+	
+	public String getEventDescription() {
+		return eventDescription;
+	}
+	
+	public void setEventDescription(String eventDescription) {
+		this.eventDescription = eventDescription;
+	}
+	
+	public String getComment() {
+		return comment;
+	}
+	
+	public void setComment(String comment) {
+		this.comment = comment;
 	}
 	
 	@Override

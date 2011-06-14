@@ -1,3 +1,27 @@
+/*
+ * The MIT License
+ * 
+ * Copyright (c) 2011, Sun Microsystems, Inc., Sam Tavakoli
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
 package jenkins.plugins.simpleclearcase;
 
 import java.io.File;
@@ -5,7 +29,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import jenkins.plugins.simpleclearcase.SimpleClearCaseChangeLogSet;
 import jenkins.plugins.simpleclearcase.util.DebugHelper;
@@ -22,6 +48,7 @@ import hudson.model.ModelObject;
 import hudson.model.TaskListener;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import hudson.model.Hudson;
 import hudson.scm.ChangeLogParser;
 import hudson.scm.PollingResult;
 import hudson.scm.SCMDescriptor;
@@ -157,7 +184,7 @@ public class SimpleClearCaseSCM extends SCM {
 	 * @param lr
 	 * @return
 	 */
-	private List<String> splitLoadRules(String lr) {
+	private static List<String> splitLoadRules(String lr) {
 		//character class matches against both \r and \n, as WIN_NEWLINE defines both \r\n, we don't need
 		//to refer to UNIX_NEWLINE, as it's only the \n character. [] is an character regex 
 		String[] split = lr.split(String.format("[%s]+", OsUtil.WIN_NEWLINE));
@@ -172,10 +199,6 @@ public class SimpleClearCaseSCM extends SCM {
 		return ret;
 	}
 	
-	/**
-	 * @author etavsam
-	 *
-	 */
 	public static class DescriptorImpl extends SCMDescriptor<SCM> implements ModelObject {
 
 		protected DescriptorImpl() {
@@ -190,8 +213,7 @@ public class SimpleClearCaseSCM extends SCM {
 			return Messages.simpleclearcase_DisplayName();
 		}
 		
-		public FormValidation doCheckViewname(@QueryParameter String value) {
-			
+		public FormValidation doCheckViewname(@QueryParameter String value) throws InterruptedException, IOException {
 			if (value == null || value.trim().isEmpty() == true) {
 				return FormValidation.error(Messages.simpleclearcase_viewname_empty());
 			}
@@ -199,9 +221,14 @@ public class SimpleClearCaseSCM extends SCM {
 			if (value.contains(" ") == true) {
 				return FormValidation.error(Messages.simpleclearcase_viewname_whitespace());
 			}
+
+			Launcher launcher = Hudson.getInstance().createLauncher(TaskListener.NULL);		
+			ClearTool ct = new ClearTool(launcher, null, null, value);
 			
-			/* validation for windows is not implemented */
-			
+			if (ct.doesViewExist(value) == false) {
+				return FormValidation.error(Messages.simpleclearcase_viewname_doesntexist());
+			}
+			 
 			return FormValidation.ok();
 		}
 		
@@ -211,11 +238,15 @@ public class SimpleClearCaseSCM extends SCM {
 			}
 			
 			if (value.contains(" ") == true) {
-				return FormValidation.error(Messages.simpleclearcase_viewname_whitespace());
+				return FormValidation.error(Messages.simpleclearcase_loadRules_whitespace());
 			}
-			
-			/* validation for windows is not implemented */
-			
+			//remove duplications and check if sizes differ 
+			List<String> splittedRules = splitLoadRules(value);
+			Set<String> uniqueSet = new HashSet<String>(splittedRules);
+
+			if (uniqueSet.size() < splittedRules.size()) {
+				return FormValidation.error(Messages.simpleclearcase_loadRules_duplicated_loadrule());
+			}
 			return FormValidation.ok();
 		}
 	}

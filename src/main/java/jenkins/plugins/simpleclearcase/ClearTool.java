@@ -1,3 +1,27 @@
+/*
+ * The MIT License
+ * 
+ * Copyright (c) 2011, Sun Microsystems, Inc., Sam Tavakoli
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
 package jenkins.plugins.simpleclearcase;
 
 import java.io.BufferedReader;
@@ -31,8 +55,9 @@ import hudson.util.ArgumentListBuilder;
  */
 public class ClearTool {
 	
-	private static final String ADDED_FILE_ELEMENT_QUOTATION = "\"";
-	private static final String ADDED_FILE_ELEMENT  		 = "Added file element";
+	private static final String ADDED_ELEMENT_QUOTATION = "\"";
+	private static final String ADDED_FILE_ELEMENT  	= "Added file element";
+	private static final String ADDED_DIRECTORY_ELEMENT = "Added directory element";
 	
 	private static final String CLEARTOOL = "cleartool";
 	private static final String LSVIEW    = "lsview"; 
@@ -43,6 +68,8 @@ public class ClearTool {
 	private static final String PARAM_FMT     = "-fmt";
 	private static final String PARAM_NCO     = "-nco";
 	private static final String PARAM_RECURSE = "-recurse";
+	private static final String PARAM_LAST    = "-last";
+
 	private static final String PARAM_EXEC    = "-exec";
 	
 	private static final String LSHISTORY_ENTRY_DATE_FORMAT = "yyyyMMdd.HHmmss";
@@ -58,13 +85,6 @@ public class ClearTool {
 		this.listener  = listener;
 		this.workspace = workspace;
 		this.viewname  = viewname.trim();
-		
-		if (doesViewExist(this.viewname) == false) {
-			String msg = String.format("View wasn't found! Viewname: %s", viewname);
-			DebugHelper.fatalError(listener, msg); 
-		
-			throw new IOException(msg);
-		}
 	}
 	
 	public boolean doesViewExist(String viewTag) throws InterruptedException {
@@ -125,39 +145,50 @@ public class ClearTool {
 		List<SimpleClearCaseChangeLogEntry> ret = new ArrayList<SimpleClearCaseChangeLogEntry>();
 		
 		String readline = in.readLine();
-
 		SimpleClearCaseChangeLogEntry currentEntry  = null;
 		
 		while (readline != null) {
-			//a commit entry could be split over several lines hence we need to check for additional info
-			if (readline.startsWith(ADDED_FILE_ELEMENT)) {
-				if (currentEntry == null) {
-					DebugHelper.error(listener, "CurrentEntry is null when a ADDED_FILE_ELEMENT popped up, " + 
-																							"shouldn't happen.");
-				}
-				//with the formatting we have the ADDED_FILE_ELEMENT row wraps the filepath with quote.
-				int startIndex = readline.indexOf(ADDED_FILE_ELEMENT_QUOTATION) + 1; 
-				int endIndex   = readline.indexOf(ADDED_FILE_ELEMENT_QUOTATION, startIndex);
-				currentEntry.addPath(readline.substring(startIndex, endIndex));
-				
+			//empty lines cannot be parsed
+			if (readline.trim().isEmpty()) {
+				readline = in.readLine();
 				continue;
-				} 
+			}
 			
-			currentEntry = parseRawLsHistoryEntry(readline);
-			
-			if (currentEntry != null) {
-				ret.add(currentEntry);
-			} else {
-				DebugHelper.error(listener, "Wasn't able to parse row, hence we skip it, line: %s", readline);
+			//a commit entry could be split over several lines hence we need to check for additional info
+			if (readline.startsWith(ADDED_FILE_ELEMENT) || readline.startsWith(ADDED_DIRECTORY_ELEMENT)) {
+				if (currentEntry == null) {
+					DebugHelper.error(listener, "CurrentEntry is null when a ADDED_FILE_ELEMENT or " +
+													"ADDED_DIRECTORY_ELEMENT popped up, shouldn't happen. row is: " + 
+													 readline);
+				}
+				
+				//with the formatting we have the ELEMENT row wraps the filepath with quote.
+				int startIndex = readline.indexOf(ADDED_ELEMENT_QUOTATION) + 1; 
+				int endIndex   = readline.indexOf(ADDED_ELEMENT_QUOTATION, startIndex);
+				currentEntry.addPath(readline.substring(startIndex, endIndex));
+ 			} else { 
+ 				//here we acctually parse the entry and build an entry from it
+ 				SimpleClearCaseChangeLogEntry tmpEntry = parseRawLsHistoryEntry(readline);
+
+ 				// if its a valid entry we add it to collection and update current entry such that
+ 				// new paths like "added file directory" are also added to the entry
+				if (tmpEntry != null) {
+					currentEntry = tmpEntry;
+					ret.add(currentEntry);
+				} else {
+					DebugHelper.error(listener, "Wasn't able to parse row, hence we skip it, line: %s", readline);
+				}
 			}
 			readline = in.readLine();
 		}
+		in.close();
 		return ret;
 	}
 	
 	/**
 	 * @param filePath to the element in repository
 	 * @param since from when we want to fetch history entries from
+	 *
 	 * @return reader to the byte array input stream with raw entries
 	 * 
 	 * @throws InterruptedException
@@ -173,12 +204,16 @@ public class ClearTool {
 					ResourceBundleHolder.get(SimpleClearCaseSCM.class).format("TimeZone")));
 
 		cmd.add(LSHISTORY);
-		cmd.add(PARAM_RECURSE);
-
+		
 		if (since != null){
 			// if the date is null, there is no time bound on lshistory
-			// if it's the first build there isn't any previous date to take as starting point
+			cmd.add(PARAM_RECURSE); //we only want to recurse when we have a baseline time
 			cmd.add(PARAM_SINCE, fmt.format(since).toLowerCase());
+		} else {
+			// if it's the first build there isn't any previous date to take as starting point
+			//but we don't want a gigantic set, so we also add LAST parameter, to limit down the resultset
+			cmd.add(PARAM_LAST);
+			cmd.add(ResourceBundleHolder.get(ClearTool.class).format("LshistoryLastNumEventsValue"));
 		}
 		
 		cmd.add(PARAM_FMT);
@@ -189,8 +224,10 @@ public class ClearTool {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		executeWithView(cmd, baos);
 		
-		Reader ret = new InputStreamReader(new ByteArrayInputStream(baos.toByteArray()));
+		byte[] result = baos.toByteArray();
 		baos.close();
+		
+		Reader ret = new InputStreamReader(new ByteArrayInputStream(result));
 		
 		return ret;
 	}
@@ -270,8 +307,10 @@ public class ClearTool {
 		
 		if (ret != 0) {
 			String errMsg = String.format("ClearTool: Exit code wasn't ok, " + 
-											"code: %d. Tried to execute: %s", ret, cmd);
-			DebugHelper.error(listener, errMsg);
+										"code: %d. Tried to execute: %s", ret, cmd.toStringWithQuote());
+			if (listener != null) { 
+				DebugHelper.error(listener, errMsg);
+			}
 			
 			if (out != null) {
 				out.flush();
@@ -304,6 +343,7 @@ public class ClearTool {
 		}
 
 		//the constructor of ChangeLogEntry follows LSHISTORY_FORMATTING parameter order
+		//depending on if the entry line has a comment the splitted line has either 6 or 7 elements.
 		return new SimpleClearCaseChangeLogEntry(entryDate, splitted[1], splitted[2], splitted[3], 
 								splitted[4], splitted[5], (splitted.length > 6) ? splitted[6] : "");
 	}

@@ -41,8 +41,7 @@ import java.util.TimeZone;
 
 import jenkins.plugins.simpleclearcase.util.DateUtil;
 import jenkins.plugins.simpleclearcase.util.DebugHelper;
-
-import org.jvnet.localizer.ResourceBundleHolder;
+import jenkins.plugins.simpleclearcase.util.PropertiesUtil;
 
 import hudson.FilePath;
 import hudson.Launcher;
@@ -199,9 +198,8 @@ public class ClearTool {
 
 		//fetching locale and time zone settings from properties file
 		SimpleDateFormat fmt = new SimpleDateFormat(SINCE_DATE_FORMAT, 
-					new Locale(ResourceBundleHolder.get(SimpleClearCaseSCM.class).format("Locale")));
-		fmt.setTimeZone(TimeZone.getTimeZone(
-					ResourceBundleHolder.get(SimpleClearCaseSCM.class).format("TimeZone")));
+					new Locale(PropertiesUtil.getLocale()));
+		fmt.setTimeZone(TimeZone.getTimeZone(PropertiesUtil.getTimeZone()));
 
 		cmd.add(LSHISTORY);
 		
@@ -213,7 +211,7 @@ public class ClearTool {
 			// if it's the first build there isn't any previous date to take as starting point
 			//but we don't want a gigantic set, so we also add LAST parameter, to limit down the resultset
 			cmd.add(PARAM_LAST);
-			cmd.add(ResourceBundleHolder.get(ClearTool.class).format("LshistoryLastNumEventsValue"));
+			cmd.add(PropertiesUtil.getLshistoryLastNumEventsValue());
 		}
 		
 		cmd.add(PARAM_FMT);
@@ -324,15 +322,23 @@ public class ClearTool {
 	private SimpleClearCaseChangeLogEntry parseRawLsHistoryEntry(String readline) {
 		//ClearCase returns with a specific formatting on date
 		SimpleDateFormat fmt = new SimpleDateFormat(LSHISTORY_ENTRY_DATE_FORMAT, 
-					new Locale(ResourceBundleHolder.get(SimpleClearCaseSCM.class).format("Locale")));
+											new Locale(PropertiesUtil.getLocale()));
 
 		//see the ChangeLogEntry.LSHISTORY_FORMATTING for details regarding parameters in one entry		
 		String[] splitted = readline.split(SimpleClearCaseChangeLogEntry.LSHISTORY_SPLIT_SEQUENCE);
 		
 		Date entryDate = null;
 		
+		String date 			= splitted[0];
+		String user 			= splitted[1];
+		String path 			= splitted[2];
+		String version  		= splitted[3];
+		String eventDescription = splitted[4];
+		String operation		= splitted[5];
+		String comment  		= (splitted.length > 6) ? splitted[6] : ""; //if there isn't a comment we have an element less
+		
 		try {
-			entryDate = fmt.parse(splitted[0]);
+			entryDate = fmt.parse(date);
 		} catch (ParseException e) {
 			//if we cannot parse the date then the whole entry will be irrelevant and we just return null
 			//calling method will log the line
@@ -343,8 +349,7 @@ public class ClearTool {
 		}
 
 		//the constructor of ChangeLogEntry follows LSHISTORY_FORMATTING parameter order
-		//depending on if the entry line has a comment the splitted line has either 6 or 7 elements.
-		return new SimpleClearCaseChangeLogEntry(entryDate, splitted[1], splitted[2], splitted[3], 
-								splitted[4], splitted[5], (splitted.length > 6) ? splitted[6] : "");
+		return new SimpleClearCaseChangeLogEntry(entryDate, user, path, version, eventDescription,
+																				operation, comment);
 	}
 }

@@ -27,19 +27,17 @@ package jenkins.plugins.simpleclearcase.util;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-import org.jvnet.localizer.ResourceBundleHolder;
-
 import jenkins.plugins.simpleclearcase.SimpleClearCaseChangeLogEntry;
-import jenkins.plugins.simpleclearcase.SimpleClearCaseSCM;
 
 public class DateUtil {
 	private static final String DATETIME_FORMAT= "yyyy-MM-dd'T'HH:mm:ssZ";
 	private static SimpleDateFormat DATETIME_FORMATTER = new SimpleDateFormat(DATETIME_FORMAT,
-									new Locale(ResourceBundleHolder.get(SimpleClearCaseSCM.class).format("Locale")));
+									new Locale(PropertiesUtil.getLocale()));
 	/**
 	 * @param entries a list of ChangeLogEntry
 	 * @return the latest commit date from a entry in entries, if entries is empty 
@@ -75,5 +73,22 @@ public class DateUtil {
 			ret = null;
 		}
 		return ret;
+	}
+	
+	/**
+	 * @param date
+	 * @param minToAdd
+	 * @return true if date1 added with minToAdd minutes is before date2, otherwise false 
+	 */
+	public static boolean before(Date date1, Date date2, int minToAdd) {
+		Calendar cal = Calendar.getInstance(); 
+		cal.setTime(date1);
+		cal.add(Calendar.MINUTE, minToAdd);
+		
+		//now date1 is added with the additional minutes
+		date1 = cal.getTime();
+
+		//return the comparison
+		return date1.before(date2);
 	}
 }

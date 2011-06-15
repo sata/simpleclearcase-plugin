@@ -34,8 +34,10 @@ import java.util.List;
 import java.util.Set;
 
 import jenkins.plugins.simpleclearcase.SimpleClearCaseChangeLogSet;
+import jenkins.plugins.simpleclearcase.util.DateUtil;
 import jenkins.plugins.simpleclearcase.util.DebugHelper;
 import jenkins.plugins.simpleclearcase.util.OsUtil;
+import jenkins.plugins.simpleclearcase.util.PropertiesUtil;
 
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -116,6 +118,14 @@ public class SimpleClearCaseSCM extends SCM {
 		}
 		
 		DebugHelper.info(listener, "compareRemoteRevisionWith - remote revision date time is: " + baselineBuiltTime);
+		
+		// we need a quiet period to be sure that someone isn't in the middle of a commit session. 
+		// quiet time works as we compare remoteRevisionDate added with quietperiod against current time
+		// if it's not before, it means that quiet period has not passed yet, which means we signal no changes
+		if (DateUtil.before(remoteRevisionDate, new Date(), PropertiesUtil.getQuietPeriod()) == false) {
+			return PollingResult.NO_CHANGES;
+		}
+		
 		if (baselineBuiltTime.before(remoteRevisionDate)) {
 			DebugHelper.info(listener, "compareRemoteRevisionWith - build now");
 			return PollingResult.BUILD_NOW;

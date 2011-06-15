@@ -24,10 +24,6 @@
 
 package jenkins.plugins.simpleclearcase;
 
-import java.io.File;
-
-import hudson.FilePath;
-
 /**
  * @author etavsam
  *

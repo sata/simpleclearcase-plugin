@@ -31,9 +31,8 @@ import hudson.scm.ChangeLogSet;
 import hudson.scm.ChangeLogSet.Entry;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -143,7 +142,7 @@ public class SimpleClearCaseChangeLogParser extends ChangeLogParser {
 		
 			DOMSource src = new DOMSource(doc);
 		
-			StreamResult res = new StreamResult(new PrintWriter(new FileWriter(file)));
+			StreamResult res = new StreamResult(new FileOutputStream(file));
 
 			t.transform(src, res);
 		} catch (TransformerException ex) {

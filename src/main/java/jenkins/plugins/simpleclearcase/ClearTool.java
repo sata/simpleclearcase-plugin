@@ -329,16 +329,8 @@ public class ClearTool {
 		
 		Date entryDate = null;
 		
-		String date 			= splitted[0];
-		String user 			= splitted[1];
-		String path 			= splitted[2];
-		String version  		= splitted[3];
-		String eventDescription = splitted[4];
-		String operation		= splitted[5];
-		String comment  		= (splitted.length > 6) ? splitted[6] : ""; //if there isn't a comment we have an element less
-		
 		try {
-			entryDate = fmt.parse(date);
+			entryDate = fmt.parse(splitted[0]);
 		} catch (ParseException e) {
 			//if we cannot parse the date then the whole entry will be irrelevant and we just return null
 			//calling method will log the line
@@ -347,6 +339,16 @@ public class ClearTool {
 		if (entryDate == null) {
 			return null; 
 		}
+		
+		String date 			= splitted[0];
+		String user 			= splitted[1];
+		String path 			= splitted[2];
+		String version  		= splitted[3];
+		String eventDescription = splitted[4];
+		String operation		= splitted[5];
+		String comment  		= (splitted.length > 6) ? splitted[6] : ""; //if there isn't a comment we have an element less
+		
+
 
 		//the constructor of ChangeLogEntry follows LSHISTORY_FORMATTING parameter order
 		return new SimpleClearCaseChangeLogEntry(entryDate, user, path, version, eventDescription,

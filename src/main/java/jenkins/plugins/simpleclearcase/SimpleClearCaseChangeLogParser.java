@@ -111,7 +111,7 @@ public class SimpleClearCaseChangeLogParser extends ChangeLogParser {
 			eventDescription.setTextContent(e.getEventDescription());
 			
 			Element items = doc.createElement(ITEMS);
-			// FIXME when changing Entry such that file elements contain versions then this must be also changed		
+			// TODO  when changing Entry such that file elements contain versions then this must be also changed		
 			for (String filePath : e.getAffectedPaths()) {
 				Element item = doc.createElement(ITEM);
 				item.setTextContent(filePath);
@@ -170,18 +170,18 @@ public class SimpleClearCaseChangeLogParser extends ChangeLogParser {
 		for (int i = 0; i < entries.getLength(); i++) {
 			Element elemEntry = (Element) entries.item(i);
 			
-			String date 			= elemEntry.getElementsByTagName(DATE).item(0).getTextContent();
-			String user 			= elemEntry.getElementsByTagName(USER).item(0).getTextContent();
-			String version  		= elemEntry.getElementsByTagName(VERSION).item(0).getTextContent();
-			String operation		= elemEntry.getElementsByTagName(OPERATION).item(0).getTextContent();
-			String eventDescription = elemEntry.getElementsByTagName(EVENT_DESCRIPTION).item(0).getTextContent();
-			String comment  		= elemEntry.getElementsByTagName(COMMENT).item(0).getTextContent();
+			String date 			= elemEntry.getElementsByTagName(DATE).item(0).getTextContent().trim();
+			String user 			= elemEntry.getElementsByTagName(USER).item(0).getTextContent().trim();
+			String version  		= elemEntry.getElementsByTagName(VERSION).item(0).getTextContent().trim();
+			String operation		= elemEntry.getElementsByTagName(OPERATION).item(0).getTextContent().trim();
+			String eventDescription = elemEntry.getElementsByTagName(EVENT_DESCRIPTION).item(0).getTextContent().trim();
+			String comment  		= elemEntry.getElementsByTagName(COMMENT).item(0).getTextContent().trim();
 			
 			//we create the entry without any file path reference
 			SimpleClearCaseChangeLogEntry entry = new SimpleClearCaseChangeLogEntry(DateUtil.parseDate(date), user,
 																		version, eventDescription, operation, comment);
 			//adding all available file paths to entry
-			addFilePathsToEntry(elemEntry.getElementsByTagName(ITEMS), entry);
+			addFilePathsToEntry(elemEntry.getElementsByTagName(ITEM), entry);
 			
 			ret.add(entry);
 		}
@@ -191,7 +191,7 @@ public class SimpleClearCaseChangeLogParser extends ChangeLogParser {
 	private static void addFilePathsToEntry(NodeList items, SimpleClearCaseChangeLogEntry entry) {
 		for (int i = 0; i < items.getLength(); i++) {
 			Element elemItem = (Element) items.item(i);
-			entry.addPath(elemItem.getTextContent());
+			entry.addPath(elemItem.getTextContent().trim());
 		}
 	}
 	

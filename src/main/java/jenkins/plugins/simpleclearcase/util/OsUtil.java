@@ -25,7 +25,7 @@
 package jenkins.plugins.simpleclearcase.util;
 
 /**
- * @author etavsam
+ * @author Sam Tavakoli
  * 
  */
 public class OsUtil {

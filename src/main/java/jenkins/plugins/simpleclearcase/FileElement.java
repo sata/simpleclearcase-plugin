@@ -25,7 +25,7 @@
 package jenkins.plugins.simpleclearcase;
 
 /**
- * @author etavsam
+ * @author Sam Tavakoli
  *
  * This class represents a file element inside the repository. It's a simple container 
  */

@@ -29,15 +29,34 @@ import java.util.Date;
 import hudson.scm.SCMRevisionState;
 
 
+/**
+ * @author Sam Tavakoli
+ *
+ * We represent a revision in a primitive manner. What we keep track of is the latest commit 
+ * date on a specific load rule path. Meaning that if a build has multiple load rules to check
+ *  we have to compare the latest commit date for each load rule individually. Hence the Map.
+ */
 public class SimpleClearCaseRevisionState extends SCMRevisionState {
 
-	private Date buildTime;
-	
-	public SimpleClearCaseRevisionState(Date buildTime) {
-		this.buildTime = buildTime;
+	private LoadRuleDateMap map;
+
+	public SimpleClearCaseRevisionState(LoadRuleDateMap map) { 
+		this.map = map;
 	}
 	
-	public Date getBuiltTime() {
-		return buildTime;
+	public SimpleClearCaseRevisionState() {
+		map = new LoadRuleDateMap();
+	}
+	
+	public Date getBuiltTime(String loadRule) {
+		return map.getBuiltTime(loadRule);
+	}
+	
+	public void setBuiltTime(String loadRule, Date date) {
+		map.setBuildTime(loadRule, date);
+	}
+	
+	public LoadRuleDateMap getLoadRuleDateMap() {
+		return map;
 	}
 }

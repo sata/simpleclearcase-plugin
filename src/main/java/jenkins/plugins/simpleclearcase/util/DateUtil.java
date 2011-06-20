@@ -32,6 +32,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+import jenkins.plugins.simpleclearcase.LoadRuleDateMap;
 import jenkins.plugins.simpleclearcase.SimpleClearCaseChangeLogEntry;
 
 public class DateUtil {
@@ -73,6 +74,21 @@ public class DateUtil {
 			ret = null;
 		}
 		return ret;
+	}
+	
+	/**
+	 * @param commits
+	 * @param dateCompare
+	 * @param minToAdd
+	 * @return false if any date is equal or after compared date, true otherwise
+	 */
+	public static boolean anyDateBefore(LoadRuleDateMap commits, Date dateCompare, int minToAdd) {
+		for (Date date : commits.getDates()) {
+			if (before(date, dateCompare, minToAdd) == false) {
+				return false;
+			}
+		}
+		return true;
 	}
 	
 	/**

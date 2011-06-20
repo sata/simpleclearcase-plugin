@@ -59,6 +59,9 @@ import hudson.scm.SCM;
 import hudson.util.FormValidation;
 
 public class SimpleClearCaseSCM extends SCM {
+	public final static String LOG_COMPARE_REMOTE_REVISION_WITH = "compareRemoteRevisionWith";
+	public final static String LOG_CHECKOUT 					= "checkout";
+	public final static String LOG_CALC_REVISIONS_FROM_BUILD    = "calcRevisionsFromBuild";
 	
 	public final static int CHANGELOGSET_ORDER = SimpleClearCaseChangeLogEntryDateComparator.DECREASING;
 	
@@ -80,17 +83,21 @@ public class SimpleClearCaseSCM extends SCM {
 			InterruptedException {
 		
 		if (build == null) {
+			DebugHelper.info(listener, LOG_CALC_REVISIONS_FROM_BUILD, "Build is null, returning null");
 			return null;
 		} else if (build.getChangeSet().isEmptySet() == true) {
 			// if the changeset is empty then we cant give any revision state
+			DebugHelper.info(listener, LOG_CALC_REVISIONS_FROM_BUILD, "Build lacks a changeSet, returning null");
 			return null;
 		} else {
-			DebugHelper.info(listener, "calcRevisionFromBuild - the build time is: %s", 
-																				build.getTime().toString());
-			//fetch the latest commit date from the last build for comparison 
-			Date latestCommit = ((SimpleClearCaseChangeLogSet) build.getChangeSet()).getLatestCommitDate();
-			
-			return new SimpleClearCaseRevisionState(latestCommit);
+			//fetch the latest commit dates from the last build for comparison 
+			LoadRuleDateMap changeSetCommits = ((SimpleClearCaseChangeLogSet) build.getChangeSet()).getLatestCommitDates(getLoadRulesAsList());
+
+			//info purposes
+			DebugHelper.info(listener, "%s: Latest commit from builds changeSet: %s", 
+											LOG_CALC_REVISIONS_FROM_BUILD, changeSetCommits);
+
+			return new SimpleClearCaseRevisionState(changeSetCommits);
 		}
 	}
 
@@ -102,35 +109,48 @@ public class SimpleClearCaseSCM extends SCM {
 		
 		//if there is no baseline it means we haven't built before, hence build
 		if (baseline == null) {
-			DebugHelper.info(listener, "compareRemoteRevisionWith - there is no baseline, BUILD_NOW");
+			DebugHelper.info(listener, "There is no baseline hence we return BUILD_NOW",
+														LOG_COMPARE_REMOTE_REVISION_WITH);
 			return PollingResult.BUILD_NOW;
 		}
-		ClearTool ct = new ClearTool(launcher, listener, workspace, viewname);
-		Date baselineBuiltTime = ((SimpleClearCaseRevisionState) baseline).getBuiltTime();
-		DebugHelper.info(listener, "compareRemoteRevisionWith - baseline time is: " + baselineBuiltTime);
 		
-		Date remoteRevisionDate = ct.getLatestCommitDate(getLoadRulesAsList(), baselineBuiltTime); 
+		ClearTool ct = new ClearTool(launcher, listener, workspace, viewname);
+
+		LoadRuleDateMap baselineCommits = ((SimpleClearCaseRevisionState) baseline).getLoadRuleDateMap();
+
+		DebugHelper.info(listener, "%s: Baseline commits from RevisionState is: %s", 
+															LOG_COMPARE_REMOTE_REVISION_WITH, baselineCommits);
+		
+		//we send baselines LoadRuleDateMap to cleartool to limit the size of the data fetched from lshistory
+		LoadRuleDateMap remoteRevisionCommits = ct.getLatestCommitDates(getLoadRulesAsList(), baselineCommits); 
 		
 		// meaning that there are no more entries from the time of last build, hence we don't build
-		if (remoteRevisionDate == null) {
-			DebugHelper.info(listener, "compareRemoteRevisionWith - remote revision date time is null");
+		if (remoteRevisionCommits.isDatesEmpty() == true) {
+			DebugHelper.info(listener, "There is no later commits, remoteRevisionCommits dates are null, " + 
+												"returning NO_CHANGES", LOG_COMPARE_REMOTE_REVISION_WITH);
 			return PollingResult.NO_CHANGES;
 		}
 		
-		DebugHelper.info(listener, "compareRemoteRevisionWith - remote revision date time is: " + baselineBuiltTime);
+		DebugHelper.info(listener, "%s: Remote revision date time is:%s", 
+																LOG_COMPARE_REMOTE_REVISION_WITH, remoteRevisionCommits);
 		
 		// we need a quiet period to be sure that someone isn't in the middle of a commit session. 
-		// quiet time works as we compare remoteRevisionDate added with quietperiod against current time
+		// quiet time works as we compare remoteRevisionDate added with quiet period against current time
 		// if it's not before, it means that quiet period has not passed yet, which means we signal no changes
-		if (DateUtil.before(remoteRevisionDate, new Date(), PropertiesUtil.getQuietPeriod()) == false) {
+		if (DateUtil.anyDateBefore(remoteRevisionCommits, new Date(), PropertiesUtil.getQuietPeriod()) == false) {
+			DebugHelper.info(listener, "%s: Still in quiet period, returning NO_CHANGES", 
+																			LOG_COMPARE_REMOTE_REVISION_WITH);
 			return PollingResult.NO_CHANGES;
 		}
 		
-		if (baselineBuiltTime.before(remoteRevisionDate)) {
-			DebugHelper.info(listener, "compareRemoteRevisionWith - build now");
+		// if baseline has a load rule which its date is before the date of the remote revision then it means there are changes		
+		if (baselineCommits.isBefore(remoteRevisionCommits) == true) {
+			DebugHelper.info(listener, "%s: There are new commits, baseline commit dates for load rule is before remote, " + 
+																   "returning BUILD_NOW", LOG_COMPARE_REMOTE_REVISION_WITH);
 			return PollingResult.BUILD_NOW;
 		} else { 
-			DebugHelper.info(listener, "compareRemoteRevisionWith - no change");
+			DebugHelper.info(listener, "%s: Baseline build dates are equal or newer than repo, returning NO_CHANGES",
+																					LOG_COMPARE_REMOTE_REVISION_WITH);
 			return PollingResult.NO_CHANGES;
 		}
 	}
@@ -140,21 +160,25 @@ public class SimpleClearCaseSCM extends SCM {
 			FilePath workspace, BuildListener listener, File changelogFile)
 			throws IOException, InterruptedException {
 		
-		DebugHelper.info(listener, "Checkout - start");		
+		DebugHelper.info(listener, LOG_CHECKOUT, "Starting to 'checkout'");		
 		ClearTool ct = new ClearTool(launcher, listener, workspace, viewname);
-		
-		Date latestCommitDate = null;
-		
+
+		LoadRuleDateMap changelogSetCommits = null;
 		// we don't have a latest commit date as we haven't tracked the changelog due to the lack of previous builds.
 		if (build.getPreviousBuild() != null && build.getPreviousBuild().getChangeSet().isEmptySet() == false) {
 
 			//From the previous ChangeLogSet we will fetch the date, such that the lshistory output in ClearTool
 			//doesn't present information already reviewed
 			SimpleClearCaseChangeLogSet previousChangeLogSet = (SimpleClearCaseChangeLogSet) build.getPreviousBuild().getChangeSet();
-			latestCommitDate = previousChangeLogSet.getLatestCommitDate();
-		} 
-
-		List<SimpleClearCaseChangeLogEntry> entries = ct.lshistory(getLoadRulesAsList(), latestCommitDate);
+			changelogSetCommits = previousChangeLogSet.getLatestCommitDates(getLoadRulesAsList());
+			
+			DebugHelper.info(listener, "%s: Fetched Dates from previous builds changelog: %s", 
+																LOG_CHECKOUT, changelogSetCommits);
+		} else {
+			DebugHelper.info(listener, LOG_CHECKOUT, "There is no Previous build or its empty, we invoke lshistory with null date");
+		}
+		
+		List<SimpleClearCaseChangeLogEntry> entries = ct.lshistory(getLoadRulesAsList(), changelogSetCommits);
 		
 		//sort the entries according to 'setting'
 		Collections.sort(entries, new SimpleClearCaseChangeLogEntryDateComparator(SimpleClearCaseSCM.CHANGELOGSET_ORDER));
@@ -257,6 +281,11 @@ public class SimpleClearCaseSCM extends SCM {
 			if (uniqueSet.size() < splittedRules.size()) {
 				return FormValidation.error(Messages.simpleclearcase_loadRules_duplicated_loadrule());
 			}
+			
+			//TODO prefix check, a load rule cannot be a prefix of another load rule
+			//TODO check trailing slashes
+			//TODO check if paths actually exists
+
 			return FormValidation.ok();
 		}
 	}

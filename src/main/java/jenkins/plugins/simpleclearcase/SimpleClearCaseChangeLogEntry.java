@@ -33,7 +33,7 @@ import hudson.model.User;
 import hudson.scm.ChangeLogSet;
 
 /**
- * @author etavsam
+ * @author etaSam Tavakoli
  *
  * This class represents a entry in the formatted lshistory output.
  * the formatting is according to LSHISTORY_FORMATTING
@@ -53,10 +53,6 @@ public class SimpleClearCaseChangeLogEntry extends ChangeLogSet.Entry {
 	 *  %c  - Comment
 	 *    
 	 */
-	// we would add an extra single quotes around the string, but as the formatting contains white space
-	// the ArgumentListBuilder will automatically quote this for us, double quoting would cause it to break down.
-//	public static final String LSHISTORY_FORMATTING = "%Nd\" \"%u\" \"%En\" \"%Vn\" \"%e\" \"%o\" \"%Nc\n";
-//	public static final String LSHISTORY_SPLIT_SEQUENCE	= "\" \"";
 	
 	// for the purpose of calling -fmt through a setview -exec we need to escape the newline character
 	// otherwise it will break after invoking -exec through the spawned shell from cleartool. 
@@ -159,6 +155,19 @@ public class SimpleClearCaseChangeLogEntry extends ChangeLogSet.Entry {
 	
 	public void setParent(SimpleClearCaseChangeLogSet set) {
 		this.parent = set;
+	}
+
+	/**
+	 * @param prefix
+	 * @return true if any path starts with prefix otherwise false
+	 */
+	public boolean containsPathWithPrefix(String prefix) {
+		for (String path : getAffectedPaths()) {
+			if (path.startsWith(prefix) == true) {
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	@Override

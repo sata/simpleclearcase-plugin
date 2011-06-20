@@ -53,14 +53,15 @@ public class DebugHelper {
 	public static void error(TaskListener listener, String msg) {
 		listener.error(msg);
 	}
-	
+
 	/**
 	 * @param launcher
 	 * @param format
 	 * @param args
 	 */
 	public static void info(TaskListener listener, String format, Object... args) {
-		listener.getLogger().printf(format + "%n", args);
+		String formatted = String.format(format + "%n", args);
+		info(listener, formatted);
 	}
 	
 	/**

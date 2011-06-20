@@ -49,10 +49,11 @@ import hudson.model.TaskListener;
 import hudson.util.ArgumentListBuilder;
 
 /**
- * @author etavsam
+ * @author Sam Tavakoli
  *
  */
 public class ClearTool {
+	private static final String LOG_LSHISTORY_PRIVATE = "lshistory(String filePath, Date since)";
 	
 	private static final String ADDED_ELEMENT_QUOTATION = "\"";
 	private static final String ADDED_FILE_ELEMENT  	= "Added file element";
@@ -102,35 +103,47 @@ public class ClearTool {
 	
 	/**
 	 * @param loadRules the paths where to fetch commit dates from
-	 * @return the latest commit date on any of the load rules
+	 * @return the latest commit date for each load rule
 	 * @throws IOException 
 	 * @throws InterruptedException 
 	 */
-	public Date getLatestCommitDate(List<String> loadRules, Date since) throws InterruptedException, IOException {
-		return DateUtil.getLatestDate(lshistory(loadRules, since));
+	public LoadRuleDateMap getLatestCommitDates(List<String> loadRules, LoadRuleDateMap previousCommits) throws InterruptedException, IOException {
+		LoadRuleDateMap ret = new LoadRuleDateMap();
+		for (String lr : loadRules) {
+			//we fetch the latest date for load rule lr and limit the set of entries from 
+			//lshistory by giving the previous commit date for the load rule
+			ret.setBuildTime(lr, DateUtil.getLatestDate(lshistory(lr, 
+											previousCommits.getBuiltTime(lr))));
+		}
+		return ret;
 	}
-	
 	
 	/**
-	 * @param loadRules All the file paths which we want to fetch commit changes from SCM
-	 * @param since specifies from when, we don't want to fetch information which has been collected for previous builds
-	 * @return a list of all changelog entries, in order of the the date stamps
-	 * @throws InterruptedException
-	 * @throws IOException
+	 * @param loadRules loadRules All the file paths which we want to fetch commit changes from SCM
+	 * @param previousCommit specifies from when, we don't want to fetch information which has been collected for previous builds, 
+	 * 					     this is load rule specific, not all load rule have the same commit-dates.
+	 * @return
+	 * @throws IOException 
+	 * @throws InterruptedException 
 	 */
-	public List<SimpleClearCaseChangeLogEntry> lshistory(List<String> loadRules, Date since) throws InterruptedException, IOException {
-			List<SimpleClearCaseChangeLogEntry> entries = new ArrayList<SimpleClearCaseChangeLogEntry>();
+	public List<SimpleClearCaseChangeLogEntry> lshistory(List<String> loadRules, LoadRuleDateMap previousCommit) throws InterruptedException, IOException {
+		List<SimpleClearCaseChangeLogEntry> entries = new ArrayList<SimpleClearCaseChangeLogEntry>();
+
+		for (String lr : loadRules) {
+			List<SimpleClearCaseChangeLogEntry> l;
 			
-			for (String lr : loadRules) {
-				List<SimpleClearCaseChangeLogEntry> l  = lshistory(lr, since);
-				
-				if (l != null) {
-					entries.addAll(l);
-				}
-			}					
-			return entries;
+			if (previousCommit == null) {
+				l = lshistory(lr, null);
+			} else {
+				l  = lshistory(lr, previousCommit.getBuiltTime(lr));
+			}
+
+			if (l != null) {
+				entries.addAll(l);
+			}
+		}					
+		return entries;
 	}
-	
 	/**
 	 * @param filePath a specific file path	 which we want to fetch commit changes from SCM.
 	 * @param since
@@ -156,9 +169,9 @@ public class ClearTool {
 			//a commit entry could be split over several lines hence we need to check for additional info
 			if (readline.startsWith(ADDED_FILE_ELEMENT) || readline.startsWith(ADDED_DIRECTORY_ELEMENT)) {
 				if (currentEntry == null) {
-					DebugHelper.error(listener, "CurrentEntry is null when a ADDED_FILE_ELEMENT or " +
-													"ADDED_DIRECTORY_ELEMENT popped up, shouldn't happen. row is: " + 
-													 readline);
+					DebugHelper.error(listener, "%s: CurrentEntry is null when a ADDED_FILE_ELEMENT or " +
+													"ADDED_DIRECTORY_ELEMENT popped up, shouldn't happen. row is: %s", 
+													 LOG_LSHISTORY_PRIVATE, readline);
 				}
 				
 				//with the formatting we have the ELEMENT row wraps the filepath with quote.
@@ -166,7 +179,7 @@ public class ClearTool {
 				int endIndex   = readline.indexOf(ADDED_ELEMENT_QUOTATION, startIndex);
 				currentEntry.addPath(readline.substring(startIndex, endIndex));
  			} else { 
- 				//here we acctually parse the entry and build an entry from it
+ 				//here we actually parse the entry and build an entry from it
  				SimpleClearCaseChangeLogEntry tmpEntry = parseRawLsHistoryEntry(readline);
 
  				// if its a valid entry we add it to collection and update current entry such that
@@ -174,8 +187,11 @@ public class ClearTool {
 				if (tmpEntry != null) {
 					currentEntry = tmpEntry;
 					ret.add(currentEntry);
+					DebugHelper.info(listener, "%s: added newly created entry: %s",
+												LOG_LSHISTORY_PRIVATE, DateUtil.formatDate(currentEntry.getDate()));					
 				} else {
-					DebugHelper.error(listener, "Wasn't able to parse row, hence we skip it, line: %s", readline);
+					DebugHelper.error(listener, "%s: Wasn't able to parse row, hence we skip it, line: %s", 
+												LOG_LSHISTORY_PRIVATE, readline);
 				}
 			}
 			readline = in.readLine();
@@ -340,7 +356,6 @@ public class ClearTool {
 			return null; 
 		}
 		
-		String date 			= splitted[0];
 		String user 			= splitted[1];
 		String path 			= splitted[2];
 		String version  		= splitted[3];

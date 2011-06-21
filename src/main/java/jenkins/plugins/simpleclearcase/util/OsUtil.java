@@ -1,4 +1,4 @@
-/*
+/**
  * The MIT License
  * 
  * Copyright (c) 2011, Sun Microsystems, Inc., Sam Tavakoli

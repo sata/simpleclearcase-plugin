@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<changelog>
+  <entry>
+    <date>2011-06-20T15:49:53+0200</date>
+    <user>etavsam</user>
+    <operation>checkin</operation>
+    <eventdescription>create version</eventdescription>
+    <version>/main/product/4</version>
+    <comment>fixing newline</comment>
+    <items>
+      <item>/vobs/some/pah/to/a/file.py</item>
+    </items>
+  </entry>
+</changelog>

@@ -2,6 +2,7 @@ This plugin interfaces Jenkins against a dynamic base view, Clearcase SCM. Its '
 
 As the view is dynamic, the plugin doesn't take any snapshots of the source code, the checkout mechanism will only review the clear tool lshistory over the specified 'load rules'. The load rules are in simple terms only paths inside of the view to specific code bases. 
 
+
 Future work:
 
 * Add support for editTypes

@@ -1,4 +1,4 @@
-/*
+/**
  * The MIT License
  * 
  * Copyright (c) 2011, Sun Microsystems, Inc., Sam Tavakoli
@@ -31,8 +31,10 @@ import hudson.scm.ChangeLogSet;
 import hudson.scm.ChangeLogSet.Entry;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -152,13 +154,17 @@ public class SimpleClearCaseChangeLogParser extends ChangeLogParser {
 		
 		return true;
 	}
-	
+
 	public static List<SimpleClearCaseChangeLogEntry> readChangeLog(File file) throws IOException, ParserConfigurationException, SAXException {
+		return readChangeLog(new FileInputStream(file));
+	}
+	
+	public static List<SimpleClearCaseChangeLogEntry> readChangeLog(InputStream is) throws IOException, ParserConfigurationException, SAXException {
 		List<SimpleClearCaseChangeLogEntry> ret = new ArrayList<SimpleClearCaseChangeLogEntry>();
 		
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder builder = factory.newDocumentBuilder();
-		Document doc = builder.parse(file);
+		Document doc = builder.parse(is);
 		
 		//proper change log should only contain a CHANGE LOG element
 		Element changelog = (Element) doc.getElementsByTagName(CHANGELOG).item(0);

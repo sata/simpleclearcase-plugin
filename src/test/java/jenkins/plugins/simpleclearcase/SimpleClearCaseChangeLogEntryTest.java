@@ -25,28 +25,42 @@
 package jenkins.plugins.simpleclearcase;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.TimeZone;
 
 import javax.xml.parsers.ParserConfigurationException;
+
+import jenkins.plugins.simpleclearcase.util.PropertiesUtil;
+import junit.framework.Assert;
 
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
-import junit.framework.Assert;
-
-public class SimpleClearCaseChangeLogParserTest {
-	public static final String CHANGELOG_SMALL = "changelog-small.xml";
+public class SimpleClearCaseChangeLogEntryTest {
 	
-	public static SimpleClearCaseChangeLogSet readSet(String name) throws IOException, ParserConfigurationException, SAXException {
-		InputStream is = SimpleClearCaseChangeLogParserTest.class.getResourceAsStream(name);
-		List<SimpleClearCaseChangeLogEntry> entries = SimpleClearCaseChangeLogParser.readChangeLog(is);
-		SimpleClearCaseChangeLogSet set = new SimpleClearCaseChangeLogSet(null, entries);
-		return set;
+	@Test
+	public void testParserFetchDate() throws IOException, ParserConfigurationException, SAXException {
+		SimpleClearCaseChangeLogSet set = SimpleClearCaseChangeLogParserTest.readSet(
+				SimpleClearCaseChangeLogParserTest.CHANGELOG_SMALL);
+
+		Calendar cal = new GregorianCalendar(2011, Calendar.JUNE, 20, 13, 49, 53);
+		cal.setTimeZone(TimeZone.getTimeZone(PropertiesUtil.getTimeZone()));
+
+		//changelog-small date, is defined as 15:49:53+0200, we set the timezone and specify 13;49 which
+		//will be transformed into 15:49 CEST
+		Date entryDate = set.getEntries().get(0).getDate();
+
+		Assert.assertTrue("Fetched date doesn't match the created one", entryDate.equals(cal.getTime()));
 	}
 	
 	@Test
-	public void testParserNonEmpty() throws IOException, ParserConfigurationException, SAXException {
-		Assert.assertFalse("SimpleClearCaseChangeLogSet shouldn't be empty", readSet(CHANGELOG_SMALL).isEmptySet());
+	public void testParserFetchUser() throws IOException, ParserConfigurationException, SAXException {
+		SimpleClearCaseChangeLogSet set = SimpleClearCaseChangeLogParserTest.readSet(
+													SimpleClearCaseChangeLogParserTest.CHANGELOG_SMALL);
+
+		Assert.assertEquals("Fetched username doesn't match", "etavsam", set.getEntries().get(0).getUser());
 	}
+
 }

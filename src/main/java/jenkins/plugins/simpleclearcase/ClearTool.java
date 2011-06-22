@@ -63,6 +63,7 @@ public class ClearTool {
 	private static final String LSVIEW    = "lsview"; 
 	private static final String LSHISTORY = "lshistory";
 	private static final String SETVIEW   = "setview";
+	private static final String DESCRIBE  = "describe";
 	
 	private static final String PARAM_SINCE   = "-since";
 	private static final String PARAM_FMT     = "-fmt";
@@ -87,6 +88,11 @@ public class ClearTool {
 		this.viewname  = viewname.trim();
 	}
 	
+	/**
+	 * @param viewTag
+	 * @return
+	 * @throws InterruptedException
+	 */
 	public boolean doesViewExist(String viewTag) throws InterruptedException {
 		ArgumentListBuilder cmd = new ArgumentListBuilder();
 		
@@ -100,6 +106,20 @@ public class ClearTool {
 		}
 		return true;
 	}
+	
+	public boolean doesClearCasePathExist(String path) throws InterruptedException {
+		ArgumentListBuilder cmd = new ArgumentListBuilder();
+		
+		cmd.add(DESCRIBE);
+		cmd.add(path);
+		
+		try {
+			executeWithView(cmd, null);
+		} catch (IOException e) {
+			return false; //if we get an error from cleartool it means that the path doesn't exist in CC
+		}
+		return true;
+	} 
 	
 	/**
 	 * @param loadRules the paths where to fetch commit dates from
@@ -312,7 +332,11 @@ public class ClearTool {
 		cmd = appendOptions(cmd, needsView);
 
 		//setting ProcStarter properties
-		Launcher.ProcStarter procStarter = this.launcher.launch().cmds(cmd).pwd(workDir);
+		Launcher.ProcStarter procStarter = this.launcher.launch().cmds(cmd);
+		
+		if (workDir != null) {
+			procStarter = procStarter.pwd(workDir);
+		}
 		
 		if (out != null) {
 			procStarter = procStarter.stdout(out);

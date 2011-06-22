@@ -266,7 +266,7 @@ public class SimpleClearCaseSCM extends SCM {
 			return FormValidation.ok();
 		}
 		
-		public FormValidation doCheckLoadRules(@QueryParameter String value) {
+		public FormValidation doCheckLoadRules(@QueryParameter String value, @QueryParameter("viewname") String viewname) throws InterruptedException, IOException {
 			if (value == null || value.trim().isEmpty() == true) {
 				return FormValidation.error(Messages.simpleclearcase_loadRules_empty());
 			}
@@ -276,16 +276,31 @@ public class SimpleClearCaseSCM extends SCM {
 			}
 			//remove duplications and check if sizes differ 
 			List<String> splittedRules = splitLoadRules(value);
+			
 			Set<String> uniqueSet = new HashSet<String>(splittedRules);
 
 			if (uniqueSet.size() < splittedRules.size()) {
 				return FormValidation.error(Messages.simpleclearcase_loadRules_duplicated_loadrule());
 			}
-			
-			//TODO prefix check, a load rule cannot be a prefix of another load rule
-			//TODO check trailing slashes
-			//TODO check if paths actually exists
 
+			//checking for trailing slashes
+			for (String lr : splittedRules) {
+				if (lr.endsWith("/") || lr.endsWith("\\")) {
+					return FormValidation.error(Messages.simpleclearcase_loadRules_trailingslash());
+				}
+			}
+			//TODO prefix check, a load rule cannot be a prefix of another load rule			
+			
+			//check if paths actually exists, as its the heaviest task its last
+			Launcher launcher = Hudson.getInstance().createLauncher(TaskListener.NULL);
+			ClearTool ct = new ClearTool(launcher, null, null, viewname);
+			
+			for (String lr : splittedRules) {
+				if (ct.doesClearCasePathExist(lr) == false) {
+					return FormValidation.error(Messages.simpleclearcase_loadRules_pathdoesnotexist() + lr);
+				}
+			}
+			
 			return FormValidation.ok();
 		}
 	}

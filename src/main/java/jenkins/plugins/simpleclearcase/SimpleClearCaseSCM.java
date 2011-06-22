@@ -289,8 +289,20 @@ public class SimpleClearCaseSCM extends SCM {
 					return FormValidation.error(Messages.simpleclearcase_loadRules_trailingslash());
 				}
 			}
-			//TODO prefix check, a load rule cannot be a prefix of another load rule			
-			
+			//checking if any load rule is a prefix of any other load rule
+			for (String s : splittedRules) {
+				
+				for (String q : splittedRules) {
+					if (s == q) {
+						//as duplications are removed, the only time they can be equal 
+						//is if the comparison is over the same object, which we don't want
+						continue;
+					}
+					if (s.startsWith(q) == true) {
+						return FormValidation.error(Messages.simpleclearcase_loadRules_loadruleprefixed() + q);
+					}
+				}
+			}
 			//check if paths actually exists, as its the heaviest task its last
 			Launcher launcher = Hudson.getInstance().createLauncher(TaskListener.NULL);
 			ClearTool ct = new ClearTool(launcher, null, null, viewname);
@@ -300,7 +312,6 @@ public class SimpleClearCaseSCM extends SCM {
 					return FormValidation.error(Messages.simpleclearcase_loadRules_pathdoesnotexist() + lr);
 				}
 			}
-			
 			return FormValidation.ok();
 		}
 	}

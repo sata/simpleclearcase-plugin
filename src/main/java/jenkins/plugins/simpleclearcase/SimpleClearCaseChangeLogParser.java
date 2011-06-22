@@ -202,7 +202,7 @@ public class SimpleClearCaseChangeLogParser extends ChangeLogParser {
 	}
 	
 	@Override
-	public ChangeLogSet<? extends Entry> parse(AbstractBuild build,
+	public ChangeLogSet<? extends Entry> parse(@SuppressWarnings("rawtypes") AbstractBuild build,
 			File changelogFile) throws IOException, SAXException {
 
 		List<SimpleClearCaseChangeLogEntry> entries;

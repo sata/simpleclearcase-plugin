@@ -85,9 +85,11 @@ public class DateUtilTest {
 		cal.add(Calendar.MINUTE, 1);
 		Date last = cal.getTime();
 		
-		Assert.assertFalse("no dates in map is before oldest date", DateUtil.anyDateBefore(map, oldest, 0));
+		Assert.assertFalse("no dates in map is before oldest date", 
+		                                                          DateUtil.anyDateBefore(map, oldest, 0));
 		Assert.assertTrue("all dates are before", DateUtil.anyDateBefore(map, last, 0));
-		Assert.assertFalse("All dates are before, min to add is 1 making it false", DateUtil.anyDateBefore(map, last, 1));
+		Assert.assertFalse("All dates are before, min to add is 1 making it false", 
+		                                                            DateUtil.anyDateBefore(map, last, 1));
 	}
 	
 	@Test

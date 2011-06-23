@@ -32,7 +32,7 @@ import java.util.TimeZone;
 
 import javax.xml.parsers.ParserConfigurationException;
 
-import jenkins.plugins.simpleclearcase.util.PropertiesUtil;
+import jenkins.plugins.simpleclearcase.util.PropUtils;
 import junit.framework.Assert;
 
 import org.junit.Test;
@@ -46,7 +46,7 @@ public class SimpleClearCaseChangeLogEntryTest {
 				SimpleClearCaseChangeLogParserTest.CHANGELOG_SMALL);
 
 		Calendar cal = new GregorianCalendar(2011, Calendar.JUNE, 20, 13, 49, 53);
-		cal.setTimeZone(TimeZone.getTimeZone(PropertiesUtil.getTimeZone()));
+		cal.setTimeZone(TimeZone.getTimeZone(PropUtils.getTimeZone()));
 
 		//changelog-small date, is defined as 15:49:53+0200, we set the timezone and specify 13;49 which
 		//will be transformed into 15:49 CEST

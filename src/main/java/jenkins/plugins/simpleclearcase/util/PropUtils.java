@@ -29,7 +29,7 @@ import jenkins.plugins.simpleclearcase.SimpleClearCaseSCM;
 
 import org.jvnet.localizer.ResourceBundleHolder;
 
-public class PropertiesUtil {
+public class PropUtils {
 	private static final String LOCALE  						= "Locale";
 	private static final String TIMEZONE						= "TimeZone";
 	private static final String QUIET_PERIOD					= "QuietPeriod";

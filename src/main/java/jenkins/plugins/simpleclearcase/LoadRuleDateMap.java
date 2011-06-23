@@ -90,10 +90,8 @@ public class LoadRuleDateMap {
 
 		for (Map.Entry<String, Date> entry : map.entrySet()) {
 			//we create a string with format
-
-			ret.add(String.format(OUTPUT_FORMAT, entry.getKey(), 
-					(entry.getValue() != null) ? 
-							DateUtil.formatDate(entry.getValue()) : null));
+			ret.add(String.format(OUTPUT_FORMAT, entry.getKey(),  
+					         (entry.getValue() != null) ? DateUtil.formatDate(entry.getValue()) : null));
 		}
 		return ret;
 	}

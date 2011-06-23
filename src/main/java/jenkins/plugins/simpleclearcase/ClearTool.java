@@ -41,17 +41,13 @@ import java.util.TimeZone;
 
 import jenkins.plugins.simpleclearcase.util.DateUtil;
 import jenkins.plugins.simpleclearcase.util.DebugHelper;
-import jenkins.plugins.simpleclearcase.util.PropertiesUtil;
+import jenkins.plugins.simpleclearcase.util.PropUtils;
 
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.TaskListener;
 import hudson.util.ArgumentListBuilder;
 
-/**
- * @author Sam Tavakoli
- * 
- */
 public class ClearTool {
     private static final String LOG_LSHISTORY_PRIVATE = "lshistory(String filePath, Date since)";
 
@@ -142,8 +138,7 @@ public class ClearTool {
     }
 
     /**
-     * @param loadRules 
-     *                  loadRules All the file paths which we want to fetch commit
+     * @param loadRules loadRules All the file paths which we want to fetch commit
      *                  changes from SCM
      * @param previousCommit 
      *            specifies from when, we don't want to fetch information which
@@ -249,8 +244,8 @@ public class ClearTool {
 
         // fetching locale and time zone settings from properties file
         SimpleDateFormat fmt = new SimpleDateFormat(SINCE_DATE_FORMAT, 
-                                                                  new Locale(PropertiesUtil.getLocale()));
-        fmt.setTimeZone(TimeZone.getTimeZone(PropertiesUtil.getTimeZone()));
+                                                                  new Locale(PropUtils.getLocale()));
+        fmt.setTimeZone(TimeZone.getTimeZone(PropUtils.getTimeZone()));
 
         cmd.add(LSHISTORY);
 
@@ -263,7 +258,7 @@ public class ClearTool {
             // but we don't want a gigantic set, so we also add LAST parameter,
             // to limit down the result set
             cmd.add(PARAM_LAST);
-            cmd.add(PropertiesUtil.getLshistoryLastNumEventsValue());
+            cmd.add(PropUtils.getLshistoryLastNumEventsValue());
         }
 
         cmd.add(PARAM_FMT);
@@ -380,7 +375,7 @@ public class ClearTool {
     private SimpleClearCaseChangeLogEntry parseRawLsHistoryEntry(String readline) {
         // ClearCase returns with a specific formatting on date
         SimpleDateFormat fmt = new SimpleDateFormat(LSHISTORY_ENTRY_DATE_FORMAT, 
-                                                                  new Locale(PropertiesUtil.getLocale()));
+                                                                  new Locale(PropUtils.getLocale()));
 
         // see the ChangeLogEntry.LSHISTORY_FORMATTING for details regarding parameters in one entry
         String[] splitted = readline.split(SimpleClearCaseChangeLogEntry.LSHISTORY_SPLIT_SEQUENCE);

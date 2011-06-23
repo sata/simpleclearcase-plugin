@@ -18,8 +18,8 @@
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package jenkins.plugins.simpleclearcase;
@@ -34,56 +34,58 @@ import java.util.List;
 import jenkins.plugins.simpleclearcase.util.DateUtil;
 
 public class SimpleClearCaseChangeLogSet extends hudson.scm.ChangeLogSet<SimpleClearCaseChangeLogEntry> {
-	private List<SimpleClearCaseChangeLogEntry> entries;
+    private List<SimpleClearCaseChangeLogEntry> entries;
 
-	protected SimpleClearCaseChangeLogSet(AbstractBuild<?, ?> build, List<SimpleClearCaseChangeLogEntry> entries) {
-		super(build);
-		this.entries = entries;
-		
-		for (SimpleClearCaseChangeLogEntry entry : entries) {
-			entry.setParent(this);
-		}
-	}
-	
-	
-	/**
-	 * @param loadRules
-	 * @return a LoadRuleDateMap which maps a load rule against the latest commit date of that specific load rule
-	 */
-	public LoadRuleDateMap getLatestCommitDates(List<String> loadRules) {
-		LoadRuleDateMap ret = new LoadRuleDateMap();
-		
-		for (String lr : loadRules) {
-			ret.setBuildTime(lr, getLatestCommitDate(lr));
-		}
-		return ret;
-	}
-	
-	/**
-	 * @param loadRule
-	 * @return the latest commit date from all of the entries who are fetched from load rule 'loadrule'
-	 */
-	private Date getLatestCommitDate(String loadRule) {
-		List<SimpleClearCaseChangeLogEntry> prefixedEntries = new ArrayList<SimpleClearCaseChangeLogEntry>();
-		
-		for (SimpleClearCaseChangeLogEntry entry : entries) {
-			if (entry.containsPathWithPrefix(loadRule) == true) {
-				prefixedEntries.add(entry);
-			}
-		}
-		return DateUtil.getLatestDate(prefixedEntries);
-	}
+    protected SimpleClearCaseChangeLogSet(AbstractBuild<?, ?> build, 
+                                                            List<SimpleClearCaseChangeLogEntry> entries) {
+        super(build);
+        this.entries = entries;
 
-	public Iterator<SimpleClearCaseChangeLogEntry> iterator() {
-		return entries.iterator();
-	}
+        for (SimpleClearCaseChangeLogEntry entry : entries) {
+            entry.setParent(this);
+        }
+    }
 
-	public List<SimpleClearCaseChangeLogEntry> getEntries() {
-		return entries;
-	}
-	
-	@Override
-	public boolean isEmptySet() {
-		return entries.isEmpty();
-	}
+    /**
+     * @param loadRules
+     * @return a LoadRuleDateMap which maps a load rule against the latest commit date of that 
+     *         specific load rule
+     */
+    public LoadRuleDateMap getLatestCommitDates(List<String> loadRules) {
+        LoadRuleDateMap ret = new LoadRuleDateMap();
+
+        for (String lr : loadRules) {
+            ret.setBuildTime(lr, getLatestCommitDate(lr));
+        }
+        return ret;
+    }
+
+    /**
+     * @param loadRule
+     * @return the latest commit date from all of the entries who are fetched from load rule 'loadrule'
+     */
+    private Date getLatestCommitDate(String loadRule) {
+        List<SimpleClearCaseChangeLogEntry> prefixedEntries = 
+                                                           new ArrayList<SimpleClearCaseChangeLogEntry>();
+
+        for (SimpleClearCaseChangeLogEntry entry : entries) {
+            if (entry.containsPathWithPrefix(loadRule) == true) {
+                prefixedEntries.add(entry);
+            }
+        }
+        return DateUtil.getLatestDate(prefixedEntries);
+    }
+
+    public Iterator<SimpleClearCaseChangeLogEntry> iterator() {
+        return entries.iterator();
+    }
+
+    public List<SimpleClearCaseChangeLogEntry> getEntries() {
+        return entries;
+    }
+
+    @Override
+    public boolean isEmptySet() {
+        return entries.isEmpty();
+    }
 }

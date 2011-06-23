@@ -24,10 +24,6 @@
 
 package jenkins.plugins.simpleclearcase.util;
 
-/**
- * @author Sam Tavakoli
- * 
- */
 public class OsUtil {
 	public static final String WIN_NEWLINE = "\r\n";
 }

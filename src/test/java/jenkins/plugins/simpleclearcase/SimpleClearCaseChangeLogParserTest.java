@@ -38,7 +38,8 @@ import junit.framework.Assert;
 public class SimpleClearCaseChangeLogParserTest {
 	public static final String CHANGELOG_SMALL = "changelog-small.xml";
 	
-	public static SimpleClearCaseChangeLogSet readSet(String name) throws IOException, ParserConfigurationException, SAXException {
+	public static SimpleClearCaseChangeLogSet readSet(String name) throws IOException, 
+	                                                          ParserConfigurationException, SAXException {
 		InputStream is = SimpleClearCaseChangeLogParserTest.class.getResourceAsStream(name);
 		List<SimpleClearCaseChangeLogEntry> entries = SimpleClearCaseChangeLogParser.readChangeLog(is);
 		SimpleClearCaseChangeLogSet set = new SimpleClearCaseChangeLogSet(null, entries);
@@ -47,6 +48,7 @@ public class SimpleClearCaseChangeLogParserTest {
 	
 	@Test
 	public void testParserNonEmpty() throws IOException, ParserConfigurationException, SAXException {
-		Assert.assertFalse("SimpleClearCaseChangeLogSet shouldn't be empty", readSet(CHANGELOG_SMALL).isEmptySet());
+		Assert.assertFalse("SimpleClearCaseChangeLogSet shouldn't be empty", 
+		                                                           readSet(CHANGELOG_SMALL).isEmptySet());
 	}
 }

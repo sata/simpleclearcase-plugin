@@ -94,7 +94,11 @@ public class DateUtilTest {
 	public void testParseDateEmpty() {
 		Date date = DateUtil.parseDate("");
 		Assert.assertNull("Empty string should return null", date);
+		
 		date = DateUtil.parseDate(" ");
 		Assert.assertNull("white space string should return null", date);
+		
+		date = DateUtil.parseDate(".2001111E4.2001111E4");
+		Assert.assertNull("Invalid string should return null", date);
 	}
 }

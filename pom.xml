@@ -1,5 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
+  <url>http://wiki.jenkins-ci.org/display/JENKINS/simpleclearcase-plugin</url>
+  
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
@@ -14,6 +16,7 @@
 
 <developers>
   <developer>
+  <id>sata_</id>
   <name>Sam Tavakoli</name>
   <email>sam@tavakoli.se</email>
   <timezone>+1</timezone>
@@ -22,9 +25,9 @@
 
 
  <scm>
-    <connection>scm:git:git@github.com:sata/simpleclearcase-plugin.git</connection>
-    <url>scm:git:git@github.com:sata/simpleclearcase-plugin.git</url>
-    <developerConnection>scm:git:git@github.com:sata/simpleclearcase-plugin.git</developerConnection>
+    <connection>scm:git:git@github.com:jenkinsci/simpleclearcase-plugin.git</connection>
+    <url>scm:git:git@github.com:jenkinsci/simpleclearcase-plugin.git</url>
+    <developerConnection>scm:git:git@github.com:jenkinsci/simpleclearcase-plugin.git</developerConnection>
   </scm>
 
   <!-- get every artifact through maven.glassfish.org, which proxies all the artifacts that we need -->

@@ -25,9 +25,9 @@
 
 
  <scm>
-    <connection>scm:git:git@github.com:jenkinsci/simpleclearcase-plugin.git</connection>
-    <url>scm:git:git@github.com:jenkinsci/simpleclearcase-plugin.git</url>
-    <developerConnection>scm:git:git@github.com:jenkinsci/simpleclearcase-plugin.git</developerConnection>
+    <connection>scm:git:git@github.com:sata/simpleclearcase-plugin.git</connection>
+    <url>scm:git:git@github.com:sata/simpleclearcase-plugin.git</url>
+    <developerConnection>scm:git:git@github.com:sata/simpleclearcase-plugin.git</developerConnection>
   </scm>
 
   <!-- get every artifact through maven.glassfish.org, which proxies all the artifacts that we need -->

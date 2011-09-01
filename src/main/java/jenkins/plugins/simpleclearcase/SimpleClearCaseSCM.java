@@ -107,14 +107,16 @@ public class SimpleClearCaseSCM extends SCM {
                                                                 throws IOException, InterruptedException {
 
         // if there is no baseline it means we haven't built before, hence build
-        if (baseline == null) {
-            DebugHelper.info(listener, "There is no baseline hence we return BUILD_NOW",
-                                                                        LOG_COMPARE_REMOTE_REVISION_WITH);
+        final AbstractBuild<?, ?> lastBuild = project.getLastBuild();
+        
+        if (lastBuild != null) {
+            DebugHelper.info(listener, "Last build: #" + lastBuild.getNumber(), LOG_COMPARE_REMOTE_REVISION_WITH);
+        } else {
+            DebugHelper.info(listener, "There is no baseline hence we return BUILD_NOW", LOG_COMPARE_REMOTE_REVISION_WITH);
             return PollingResult.BUILD_NOW;
         }
 
         ClearTool ct = new ClearTool(launcher, listener, workspace, viewname);
-
         LoadRuleDateMap baselineCommits = ((SimpleClearCaseRevisionState) baseline).getLoadRuleDateMap();
 
         DebugHelper.info(listener, "%s: Baseline commits from RevisionState is: %s",

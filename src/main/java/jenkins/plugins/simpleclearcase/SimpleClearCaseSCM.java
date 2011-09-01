@@ -82,12 +82,11 @@ public class SimpleClearCaseSCM extends SCM {
                                          TaskListener listener) throws IOException, InterruptedException {
 
         if (build == null) {
-            DebugHelper.info(listener, LOG_CALC_REVISIONS_FROM_BUILD, "Build is null, returning null");
+            DebugHelper.info(listener, "%s: Build is null, returning null", LOG_CALC_REVISIONS_FROM_BUILD);
             return null;
         } else if (build.getChangeSet().isEmptySet() == true) {
             // if the changeset is empty then we cant give any revision state
-            DebugHelper.info(listener, LOG_CALC_REVISIONS_FROM_BUILD, 
-                                                               "Build lacks a changeSet, returning null");
+            DebugHelper.info(listener, "%s: Build lacks a changeSet, returning null", LOG_CALC_REVISIONS_FROM_BUILD);
             return null;
         } else {
             // fetch the latest commit dates from the last build for comparison
@@ -110,9 +109,9 @@ public class SimpleClearCaseSCM extends SCM {
         final AbstractBuild<?, ?> lastBuild = project.getLastBuild();
         
         if (lastBuild != null) {
-            DebugHelper.info(listener, "Last build: #" + lastBuild.getNumber(), LOG_COMPARE_REMOTE_REVISION_WITH);
+            DebugHelper.info(listener, "%s: Last build: #%s", LOG_COMPARE_REMOTE_REVISION_WITH, lastBuild.getNumber());
         } else {
-            DebugHelper.info(listener, "There is no baseline hence we return BUILD_NOW", LOG_COMPARE_REMOTE_REVISION_WITH);
+            DebugHelper.info(listener, "%s: There is no baseline hence we return BUILD_NOW", LOG_COMPARE_REMOTE_REVISION_WITH);
             return PollingResult.BUILD_NOW;
         }
 
@@ -129,8 +128,8 @@ public class SimpleClearCaseSCM extends SCM {
         // meaning that there are no more entries from the time of last build,
         // hence we don't build
         if (remoteRevCommits.isDatesEmpty() == true) {
-            DebugHelper.info(listener, "There is no later commits, remoteRevisionCommits dates are null, "
-                                              + "returning NO_CHANGES", LOG_COMPARE_REMOTE_REVISION_WITH);
+            DebugHelper.info(listener, "%s: There is no later commits, remoteRevisionCommits dates are null returning NO_CHANGES",
+                                                                                                LOG_COMPARE_REMOTE_REVISION_WITH);
             return PollingResult.NO_CHANGES;
         }
 
@@ -166,7 +165,7 @@ public class SimpleClearCaseSCM extends SCM {
     public boolean checkout(AbstractBuild<?, ?> build, Launcher launcher, FilePath workspace, 
                     BuildListener listener, File changelogFile) throws IOException, InterruptedException {
 
-        DebugHelper.info(listener, LOG_CHECKOUT, "Starting to 'checkout'");
+        DebugHelper.info(listener, "%s: Starting to 'checkout'", LOG_CHECKOUT);
         ClearTool ct = new ClearTool(launcher, listener, workspace, viewname);
 
         LoadRuleDateMap changelogSetCommits = null;
@@ -184,8 +183,8 @@ public class SimpleClearCaseSCM extends SCM {
             DebugHelper.info(listener,"%s: Fetched Dates from previous builds changelog: %s",
                                                                        LOG_CHECKOUT, changelogSetCommits);
         } else {
-            DebugHelper.info(listener, LOG_CHECKOUT, "There is no Previous build or its empty, " +
-            		                                                "we invoke lshistory with null date");
+            DebugHelper.info(listener, "%s: There is no Previous build or its empty, we invoke lshistory with null date",
+                                                                                                            LOG_CHECKOUT);
         }
 
         List<SimpleClearCaseChangeLogEntry> entries = ct.lshistory(getLoadRulesAsList(), 

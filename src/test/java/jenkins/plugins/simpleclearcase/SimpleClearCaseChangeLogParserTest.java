@@ -38,10 +38,12 @@ import junit.framework.Assert;
 public class SimpleClearCaseChangeLogParserTest {
 	public static final String CHANGELOG_SMALL = "changelog-small.xml";
 	
-	public static SimpleClearCaseChangeLogSet readSet(String name) throws IOException, 
+	private SimpleClearCaseChangeLogParser parser = new SimpleClearCaseChangeLogParser();
+	
+	public SimpleClearCaseChangeLogSet readSet(String name) throws IOException, 
 	                                                          ParserConfigurationException, SAXException {
 		InputStream is = SimpleClearCaseChangeLogParserTest.class.getResourceAsStream(name);
-		List<SimpleClearCaseChangeLogEntry> entries = SimpleClearCaseChangeLogParser.readChangeLog(is);
+		List<SimpleClearCaseChangeLogEntry> entries = parser.readChangeLog(is);
 		SimpleClearCaseChangeLogSet set = new SimpleClearCaseChangeLogSet(null, entries);
 		return set;
 	}

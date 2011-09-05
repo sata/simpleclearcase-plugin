@@ -35,6 +35,7 @@ import junit.framework.Assert;
 import org.junit.Test;
 
 public class DateUtilTest {
+    DateUtil dateUtil = new DateUtil();
 
 	private Calendar initCalendar() {
 		Calendar cal = new GregorianCalendar(2011, Calendar.JUNE, 20, 13, 49, 53);
@@ -49,20 +50,20 @@ public class DateUtilTest {
 		Date b = cal.getTime();
 		
 		//min to add is 0
-		Assert.assertFalse("Dates are the same, no one is before", DateUtil.before(a, b, 0));
+		Assert.assertFalse("Dates are the same, no one is before", dateUtil.before(a, b, 0));
 		//min to add is 10
-		Assert.assertFalse("Dates are the same, a has minToAdd 10", DateUtil.before(a, b, 10));
+		Assert.assertFalse("Dates are the same, a has minToAdd 10", dateUtil.before(a, b, 10));
 		
 		cal.add(Calendar.MINUTE, 20);
 		//b is now 20 minutes after a
 		b = cal.getTime();
 		
 		//min to add is 0
-		Assert.assertTrue("a is before b", DateUtil.before(a, b, 0));
+		Assert.assertTrue("a is before b", dateUtil.before(a, b, 0));
 		//min to add is 19
-		Assert.assertTrue("a is before b", DateUtil.before(a, b, 19));
+		Assert.assertTrue("a is before b", dateUtil.before(a, b, 19));
 		//min to add is 20
-		Assert.assertFalse("a is before b, though minToAdd 20", DateUtil.before(a, b, 20));
+		Assert.assertFalse("a is before b, though minToAdd 20", dateUtil.before(a, b, 20));
 	}
 	
 	@Test
@@ -86,21 +87,21 @@ public class DateUtilTest {
 		Date last = cal.getTime();
 		
 		Assert.assertFalse("no dates in map is before oldest date", 
-		                                                          DateUtil.anyDateBefore(map, oldest, 0));
-		Assert.assertTrue("all dates are before", DateUtil.anyDateBefore(map, last, 0));
+		                                                          dateUtil.anyDateBefore(map, oldest, 0));
+		Assert.assertTrue("all dates are before", dateUtil.anyDateBefore(map, last, 0));
 		Assert.assertFalse("All dates are before, min to add is 1 making it false", 
-		                                                            DateUtil.anyDateBefore(map, last, 1));
+		                                                            dateUtil.anyDateBefore(map, last, 1));
 	}
 	
 	@Test
 	public void testParseDateEmpty() {
-		Date date = DateUtil.parseDate("");
+		Date date = dateUtil.parseDate("");
 		Assert.assertNull("Empty string should return null", date);
 		
-		date = DateUtil.parseDate(" ");
+		date = dateUtil.parseDate(" ");
 		Assert.assertNull("white space string should return null", date);
 		
-		date = DateUtil.parseDate(".2001111E4.2001111E4");
+		date = dateUtil.parseDate(".2001111E4.2001111E4");
 		Assert.assertNull("Invalid string should return null", date);
 	}
 }

@@ -84,21 +84,31 @@ public class SimpleClearCaseSCM extends SCM {
         if (build == null) {
             DebugHelper.info(listener, "%s: Build is null, returning null", LOG_CALC_REVISIONS_FROM_BUILD);
             return null;
-        } else if (build.getChangeSet().isEmptySet() == true) {
-            // if the changeset is empty then we cant give any revision state
-            DebugHelper.info(listener, "%s: Build lacks a changeSet, returning null", LOG_CALC_REVISIONS_FROM_BUILD);
-            return null;
-        } else {
-            // fetch the latest commit dates from the last build for comparison
-            SimpleClearCaseChangeLogSet set = (SimpleClearCaseChangeLogSet) build.getChangeSet();
-            LoadRuleDateMap changeSetCommits = set.getLatestCommitDates(getLoadRulesAsList());
-
-            // info purposes
-            DebugHelper.info(listener, "%s: Latest commit from builds changeSet: %s",
-                                                         LOG_CALC_REVISIONS_FROM_BUILD, changeSetCommits);
-            return new SimpleClearCaseRevisionState(changeSetCommits);
         }
+
+        DebugHelper.info(listener, "%s: Build Number is: %s", LOG_CALC_REVISIONS_FROM_BUILD, build.getNumber());    
+
+        if (build.getChangeSet().isEmptySet() == true) {
+            // if the changeset is empty then we cant give any revision state
+            DebugHelper.info(listener, "%s: Build lacks a changeSet, returning null, buildNumber is: %d", LOG_CALC_REVISIONS_FROM_BUILD, build.getNumber());
+            return null;
+        } 
+
+
+        // fetch the latest commit dates from the last build for comparison
+        SimpleClearCaseChangeLogSet set = (SimpleClearCaseChangeLogSet) build.getChangeSet();
+        LoadRuleDateMap changeSetCommits = set.getLatestCommitDates(getLoadRulesAsList());
+
+        // info purposes
+        DebugHelper.info(listener, "%s: Latest commit from builds changeSet: %s", LOG_CALC_REVISIONS_FROM_BUILD, changeSetCommits);
+        //return new SimpleClearCaseRevisionState(changeSetCommits);
+        
+        //TODO remove this
+        SimpleClearCaseRevisionState rev = new SimpleClearCaseRevisionState(changeSetCommits);
+        rev.setId("Build Number: " + build.getNumber());
+        return rev;
     }
+
 
     @Override
     protected PollingResult compareRemoteRevisionWith(AbstractProject<?, ?> project, Launcher launcher,
@@ -108,13 +118,22 @@ public class SimpleClearCaseSCM extends SCM {
         // if there is no baseline it means we haven't built before, hence build
         final AbstractBuild<?, ?> lastBuild = project.getLastBuild();
         
-        if (lastBuild != null) {
-            DebugHelper.info(listener, "%s: Last build: #%s", LOG_COMPARE_REMOTE_REVISION_WITH, lastBuild.getNumber());
-        } else {
-            DebugHelper.info(listener, "%s: There is no baseline hence we return BUILD_NOW", LOG_COMPARE_REMOTE_REVISION_WITH);
+        if (lastBuild == null) {
+            DebugHelper.info(listener, "%s: This is the first build as there isn't any previous build, we return BUILD_NOW", LOG_COMPARE_REMOTE_REVISION_WITH);
             return PollingResult.BUILD_NOW;
+        } 
+        
+        DebugHelper.info(listener, "%s: Last build: #%s", LOG_COMPARE_REMOTE_REVISION_WITH, lastBuild.getNumber());
+        
+        if (baseline == null) {
+            //TODO remove this
+            DebugHelper.info(listener, "%s: Baseline is null, calcRevisionsFromBuild returned null, what is it we compare with acctually?", LOG_COMPARE_REMOTE_REVISION_WITH);
+        } else {
+            //TODO remove this
+            DebugHelper.info(listener, "%s: Baseline isnt null, what LR-map is it carrying then?: %s", LOG_COMPARE_REMOTE_REVISION_WITH, ((SimpleClearCaseRevisionState) baseline).getLoadRuleDateMap());
         }
-
+        //TODO remove this
+        DebugHelper.info(listener, "baseline id is: " + ((SimpleClearCaseRevisionState) baseline).getId());
         ClearTool ct = new ClearTool(launcher, listener, workspace, viewname);
         LoadRuleDateMap baselineCommits = ((SimpleClearCaseRevisionState) baseline).getLoadRuleDateMap();
 
@@ -195,6 +214,16 @@ public class SimpleClearCaseSCM extends SCM {
 
         // create the set with entries
         SimpleClearCaseChangeLogSet set = new SimpleClearCaseChangeLogSet(build, entries);
+        
+        ///TODO remove this, testing bug
+        DebugHelper.info(listener, "%s: writing down changelogSet entries", LOG_CHECKOUT);
+        LoadRuleDateMap lrMap = set.getLatestCommitDates(getLoadRulesAsList());
+
+        
+        // TODO remove
+        DebugHelper.info(listener, "%s: What is the LR mapping from the changelog set entries which we write down? %s",
+                                            LOG_CHECKOUT, lrMap);
+
         return SimpleClearCaseChangeLogParser.writeChangeLog(changelogFile, set, listener);
     }
 

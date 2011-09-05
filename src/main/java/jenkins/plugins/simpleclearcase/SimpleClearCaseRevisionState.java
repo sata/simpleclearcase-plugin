@@ -35,7 +35,10 @@ import hudson.scm.SCMRevisionState;
  */
 public class SimpleClearCaseRevisionState extends SCMRevisionState {
     private LoadRuleDateMap map;
-
+    
+    //todo remove this
+    private String id;
+    
     public SimpleClearCaseRevisionState(LoadRuleDateMap map) {
         this.map = map;
     }
@@ -54,5 +57,13 @@ public class SimpleClearCaseRevisionState extends SCMRevisionState {
 
     public LoadRuleDateMap getLoadRuleDateMap() {
         return map;
+    }
+    
+    public void setId(String id) {
+        this.id = id;
+    }
+    
+    public String getId() {
+        return id;
     }
 }

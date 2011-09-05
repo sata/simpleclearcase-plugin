@@ -248,18 +248,12 @@ public class ClearTool {
         fmt.setTimeZone(TimeZone.getTimeZone(PropUtils.getTimeZone()));
 
         cmd.add(LSHISTORY);
-
+        cmd.add(PARAM_RECURSE);
+        
         if (since != null) {
             // if the date is null, there is no time bound on lshistory
-            cmd.add(PARAM_RECURSE); // we only want to recurse when we have a baseline time
             cmd.add(PARAM_SINCE, fmt.format(since).toLowerCase());
-        } else {
-            // if it's the first build there isn't any previous date to take as starting point
-            // but we don't want a gigantic set, so we also add LAST parameter,
-            // to limit down the result set
-            cmd.add(PARAM_LAST);
-            cmd.add(PropUtils.getLshistoryLastNumEventsValue());
-        }
+        } 
 
         cmd.add(PARAM_FMT);
         cmd.add(SimpleClearCaseChangeLogEntry.LSHISTORY_FORMATTING);

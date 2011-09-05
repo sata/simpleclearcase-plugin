@@ -36,11 +36,13 @@ import jenkins.plugins.simpleclearcase.util.DateUtil;
 
 public class LoadRuleDateMap {
 	private static final String OUTPUT_FORMAT = "[%s, %s]";
-	
+	//due to syncronization problem with Calendar we need to have an private instance to DateUtil
+	private DateUtil dateUtil;
 	private Map<String, Date> map;
 	
 	public LoadRuleDateMap() {
 		map = new HashMap<String, Date>();
+		dateUtil = new DateUtil();
 	}
 	
 	public Date getBuiltTime(String loadRule) {
@@ -91,7 +93,7 @@ public class LoadRuleDateMap {
 		for (Map.Entry<String, Date> entry : map.entrySet()) {
 			//we create a string with format
 			ret.add(String.format(OUTPUT_FORMAT, entry.getKey(),  
-					         (entry.getValue() != null) ? DateUtil.formatDate(entry.getValue()) : null));
+					         (entry.getValue() != null) ? dateUtil.formatDate(entry.getValue()) : null));
 		}
 		return ret;
 	}

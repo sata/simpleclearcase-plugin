@@ -76,12 +76,16 @@ public class ClearTool {
     private FilePath     workspace;
     private String       viewname;
 
+    //due to syncronization problem with Calendar we need to have an private instance to DateUtil
+    private DateUtil    dateUtil;
+    
     public ClearTool(Launcher launcher, TaskListener listener, FilePath workspace, 
                                           String viewname) throws InterruptedException, IOException {
         this.launcher  = launcher;
         this.listener  = listener;
         this.workspace = workspace;
         this.viewname  = viewname.trim();
+        this.dateUtil  = new DateUtil();
     }
 
     /**
@@ -218,7 +222,7 @@ public class ClearTool {
                     currentEntry = tmpEntry;
                     ret.add(currentEntry);
                     DebugHelper.info(listener, "%s: added newly created entry: %s",
-                                   LOG_LSHISTORY_PRIVATE, DateUtil.formatDate(currentEntry.getDate()));
+                                   LOG_LSHISTORY_PRIVATE, dateUtil.formatDate(currentEntry.getDate()));
                 } else {
                     DebugHelper.error(listener, "%s: Wasn't able to parse row, hence we skip it, " 
                                                         + "line: %s", LOG_LSHISTORY_PRIVATE, readline);

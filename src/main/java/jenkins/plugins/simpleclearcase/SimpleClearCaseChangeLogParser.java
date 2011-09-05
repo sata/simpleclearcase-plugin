@@ -75,7 +75,13 @@ public class SimpleClearCaseChangeLogParser extends ChangeLogParser {
     private static final String OPERATION         = "operation";
     private static final String EVENT_DESCRIPTION = "eventdescription";
 
-    public static boolean writeChangeLog(File file, SimpleClearCaseChangeLogSet set,
+    private DateUtil dateUtil;
+    
+    public SimpleClearCaseChangeLogParser() {
+        dateUtil = new DateUtil();
+    }
+    
+    public boolean writeChangeLog(File file, SimpleClearCaseChangeLogSet set,
                                                                TaskListener listener) throws IOException {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         Document doc;
@@ -96,7 +102,7 @@ public class SimpleClearCaseChangeLogParser extends ChangeLogParser {
             Element entry = doc.createElement(ENTRY);
 
             Element date = doc.createElement(DATE);
-            date.setTextContent(DateUtil.formatDate(e.getDate()));
+            date.setTextContent(dateUtil.formatDate(e.getDate()));
 
             Element user = doc.createElement(USER);
             user.setTextContent(e.getUser());
@@ -157,12 +163,12 @@ public class SimpleClearCaseChangeLogParser extends ChangeLogParser {
         return true;
     }
 
-    public static List<SimpleClearCaseChangeLogEntry> readChangeLog(File file) throws 
+    public List<SimpleClearCaseChangeLogEntry> readChangeLog(File file) throws 
                                                  IOException, ParserConfigurationException, SAXException {
         return readChangeLog(new FileInputStream(file));
     }
 
-    public static List<SimpleClearCaseChangeLogEntry> readChangeLog(InputStream is) throws 
+    public List<SimpleClearCaseChangeLogEntry> readChangeLog(InputStream is) throws 
                                                  IOException, ParserConfigurationException, SAXException {
         List<SimpleClearCaseChangeLogEntry> ret = new ArrayList<SimpleClearCaseChangeLogEntry>();
 
@@ -189,7 +195,7 @@ public class SimpleClearCaseChangeLogParser extends ChangeLogParser {
 
             // we create the entry without any file path reference
             SimpleClearCaseChangeLogEntry entry = new SimpleClearCaseChangeLogEntry(
-                           DateUtil.parseDate(date), user, version, eventDescription, operation, comment);
+                           dateUtil.parseDate(date), user, version, eventDescription, operation, comment);
             // adding all available file paths to entry
             addFilePathsToEntry(elemEntry.getElementsByTagName(ITEM), entry);
             ret.add(entry);

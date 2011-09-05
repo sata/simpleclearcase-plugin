@@ -35,8 +35,8 @@ import jenkins.plugins.simpleclearcase.LoadRuleDateMap;
 import jenkins.plugins.simpleclearcase.SimpleClearCaseChangeLogEntry;
 
 public class DateUtil {
-    private static final String DATETIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
-    private static SimpleDateFormat DATETIME_FORMATTER = new SimpleDateFormat(
+    private final String DATETIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ssZ";
+    private SimpleDateFormat DATETIME_FORMATTER = new SimpleDateFormat(
                                                       DATETIME_FORMAT, new Locale(PropUtils.getLocale()));
 
     /**
@@ -61,11 +61,11 @@ public class DateUtil {
         return latest;
     }
 
-    public static String formatDate(Date date) {
+    public String formatDate(Date date) {
         return DATETIME_FORMATTER.format(date);
     }
 
-    public static Date parseDate(String date) {
+    public Date parseDate(String date) {
         Date ret;
 
         try {
@@ -82,7 +82,7 @@ public class DateUtil {
      * @param minToAdd
      * @return false if any date is equal or after compared date, true otherwise
      */
-    public static boolean anyDateBefore(LoadRuleDateMap commits,
+    public boolean anyDateBefore(LoadRuleDateMap commits,
             Date dateCompare, int minToAdd) {
         for (Date date : commits.getDates()) {
             if (before(date, dateCompare, minToAdd) == false) {
@@ -97,7 +97,7 @@ public class DateUtil {
      * @param minToAdd
      * @return true if date1 added with minToAdd minutes is before date2, otherwise false 
      */
-    public static boolean before(Date date1, Date date2, int minToAdd) {
+    public boolean before(Date date1, Date date2, int minToAdd) {
         Calendar cal = Calendar.getInstance();
         cal.setTime(date1);
         cal.add(Calendar.MINUTE, minToAdd);

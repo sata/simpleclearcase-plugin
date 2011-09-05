@@ -68,6 +68,10 @@ public class SimpleClearCaseSCM extends SCM {
     private String loadRules;
     private String viewname;
 
+    //due to syncronization problem with Calendar we need to have an private instance to DateUtil
+    private DateUtil dateUtil;
+    private SimpleClearCaseChangeLogParser changeLogParser;
+    
     @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
 
@@ -75,6 +79,9 @@ public class SimpleClearCaseSCM extends SCM {
     public SimpleClearCaseSCM(String loadRules, String viewname) {
         this.loadRules = loadRules;
         this.viewname = viewname;
+    
+        dateUtil = new DateUtil();
+        changeLogParser = new SimpleClearCaseChangeLogParser();
     }
 
     @Override
@@ -148,7 +155,7 @@ public class SimpleClearCaseSCM extends SCM {
            if it's not before, it means that quiet period has not passed yet, 
            which means we signal no changes
          */
-        if (DateUtil.anyDateBefore(remoteRevCommits, new Date(), PropUtils.getQuietPeriod()) == false) {
+        if (dateUtil.anyDateBefore(remoteRevCommits, new Date(), PropUtils.getQuietPeriod()) == false) {
             DebugHelper.info(listener, "%s: Still in quiet period, returning NO_CHANGES", 
                                                                         LOG_COMPARE_REMOTE_REVISION_WITH);
             return PollingResult.NO_CHANGES;
@@ -200,7 +207,7 @@ public class SimpleClearCaseSCM extends SCM {
                                                                   SimpleClearCaseSCM.CHANGELOGSET_ORDER));
         // create the set with entries
         SimpleClearCaseChangeLogSet set = new SimpleClearCaseChangeLogSet(build, entries);
-        return SimpleClearCaseChangeLogParser.writeChangeLog(changelogFile, set, listener);
+        return changeLogParser.writeChangeLog(changelogFile, set, listener);
     }
 
     @Override

@@ -31,7 +31,7 @@
   </ol>
   
   <!--  hard coded view limit, this is to avoid flodding the changelog page. -->
-  <j:set var="maxEntries" value="${99}"/>  
+  <j:set var="maxEntries" value="${199}"/>  
   <j:choose>
     <j:when test="${it.items.size() >= maxEntries}">    
       <h5>ChangeLog is limited to ${maxEntries + 1} entries.</h5>

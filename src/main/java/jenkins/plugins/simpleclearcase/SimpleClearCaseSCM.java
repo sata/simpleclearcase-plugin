@@ -59,6 +59,7 @@ import hudson.scm.SCM;
 import hudson.util.FormValidation;
 
 public class SimpleClearCaseSCM extends SCM {
+
     public final static String LOG_COMPARE_REMOTE_REVISION_WITH = "compareRemoteRevisionWith";
     public final static String LOG_CHECKOUT                     = "checkout";
     public final static String LOG_CALC_REVISIONS_FROM_BUILD    = "calcRevisionsFromBuild";
@@ -70,8 +71,7 @@ public class SimpleClearCaseSCM extends SCM {
 
     //due to syncronization problem with Calendar we need to have an private instance to DateUtil
     private DateUtil dateUtil;
-    private SimpleClearCaseChangeLogParser changeLogParser;
-    
+        
     @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
 
@@ -79,9 +79,6 @@ public class SimpleClearCaseSCM extends SCM {
     public SimpleClearCaseSCM(String loadRules, String viewname) {
         this.loadRules = loadRules;
         this.viewname = viewname;
-    
-        dateUtil = new DateUtil();
-        changeLogParser = new SimpleClearCaseChangeLogParser();
     }
 
     @Override
@@ -93,7 +90,6 @@ public class SimpleClearCaseSCM extends SCM {
             return null;
         }
 
-        DebugHelper.info(listener, "%s: Build Number is: %s", LOG_CALC_REVISIONS_FROM_BUILD, build.getNumber());    
 
         if (build.getChangeSet().isEmptySet() == true) {
             // if the changeset is empty then we cant give any revision state
@@ -155,7 +151,7 @@ public class SimpleClearCaseSCM extends SCM {
            if it's not before, it means that quiet period has not passed yet, 
            which means we signal no changes
          */
-        if (dateUtil.anyDateBefore(remoteRevCommits, new Date(), PropUtils.getQuietPeriod()) == false) {
+        if (getDateUtil().anyDateBefore(remoteRevCommits, new Date(), PropUtils.getQuietPeriod()) == false) {
             DebugHelper.info(listener, "%s: Still in quiet period, returning NO_CHANGES", 
                                                                         LOG_COMPARE_REMOTE_REVISION_WITH);
             return PollingResult.NO_CHANGES;
@@ -207,7 +203,7 @@ public class SimpleClearCaseSCM extends SCM {
                                                                   SimpleClearCaseSCM.CHANGELOGSET_ORDER));
         // create the set with entries
         SimpleClearCaseChangeLogSet set = new SimpleClearCaseChangeLogSet(build, entries);
-        return changeLogParser.writeChangeLog(changelogFile, set, listener);
+        return ((SimpleClearCaseChangeLogParser) createChangeLogParser()).writeChangeLog(changelogFile, set, listener);
     }
 
     @Override
@@ -220,6 +216,14 @@ public class SimpleClearCaseSCM extends SCM {
         return new SimpleClearCaseChangeLogParser();
     }
 
+    
+    private DateUtil getDateUtil() {
+        if (dateUtil == null) {
+            dateUtil = new DateUtil();
+        }
+        return dateUtil;
+    }
+    
     /**
      * @return
      */

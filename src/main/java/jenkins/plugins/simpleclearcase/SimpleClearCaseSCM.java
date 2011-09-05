@@ -101,12 +101,8 @@ public class SimpleClearCaseSCM extends SCM {
 
         // info purposes
         DebugHelper.info(listener, "%s: Latest commit from builds changeSet: %s", LOG_CALC_REVISIONS_FROM_BUILD, changeSetCommits);
-        //return new SimpleClearCaseRevisionState(changeSetCommits);
-        
-        //TODO remove this
-        SimpleClearCaseRevisionState rev = new SimpleClearCaseRevisionState(changeSetCommits);
-        rev.setId("Build Number: " + build.getNumber());
-        return rev;
+
+        return new SimpleClearCaseRevisionState(changeSetCommits);
     }
 
 
@@ -124,16 +120,7 @@ public class SimpleClearCaseSCM extends SCM {
         } 
         
         DebugHelper.info(listener, "%s: Last build: #%s", LOG_COMPARE_REMOTE_REVISION_WITH, lastBuild.getNumber());
-        
-        if (baseline == null) {
-            //TODO remove this
-            DebugHelper.info(listener, "%s: Baseline is null, calcRevisionsFromBuild returned null, what is it we compare with acctually?", LOG_COMPARE_REMOTE_REVISION_WITH);
-        } else {
-            //TODO remove this
-            DebugHelper.info(listener, "%s: Baseline isnt null, what LR-map is it carrying then?: %s", LOG_COMPARE_REMOTE_REVISION_WITH, ((SimpleClearCaseRevisionState) baseline).getLoadRuleDateMap());
-        }
-        //TODO remove this
-        DebugHelper.info(listener, "baseline id is: " + ((SimpleClearCaseRevisionState) baseline).getId());
+
         ClearTool ct = new ClearTool(launcher, listener, workspace, viewname);
         LoadRuleDateMap baselineCommits = ((SimpleClearCaseRevisionState) baseline).getLoadRuleDateMap();
 
@@ -211,19 +198,8 @@ public class SimpleClearCaseSCM extends SCM {
         // sort the entries according to 'setting'
         Collections.sort(entries, new SimpleClearCaseChangeLogEntryDateComparator(
                                                                   SimpleClearCaseSCM.CHANGELOGSET_ORDER));
-
         // create the set with entries
         SimpleClearCaseChangeLogSet set = new SimpleClearCaseChangeLogSet(build, entries);
-        
-        ///TODO remove this, testing bug
-        DebugHelper.info(listener, "%s: writing down changelogSet entries", LOG_CHECKOUT);
-        LoadRuleDateMap lrMap = set.getLatestCommitDates(getLoadRulesAsList());
-
-        
-        // TODO remove
-        DebugHelper.info(listener, "%s: What is the LR mapping from the changelog set entries which we write down? %s",
-                                            LOG_CHECKOUT, lrMap);
-
         return SimpleClearCaseChangeLogParser.writeChangeLog(changelogFile, set, listener);
     }
 

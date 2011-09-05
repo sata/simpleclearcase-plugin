@@ -203,7 +203,7 @@ public class SimpleClearCaseChangeLogParser extends ChangeLogParser {
         return ret;
     }
 
-    private static void addFilePathsToEntry(NodeList items, SimpleClearCaseChangeLogEntry entry) {
+    private void addFilePathsToEntry(NodeList items, SimpleClearCaseChangeLogEntry entry) {
         for (int i = 0; i < items.getLength(); i++) {
             Element elemItem = (Element) items.item(i);
             entry.addPath(elemItem.getTextContent().trim());

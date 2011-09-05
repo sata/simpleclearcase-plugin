@@ -80,7 +80,6 @@ public class SimpleClearCaseChangeLogParser extends ChangeLogParser {
     public SimpleClearCaseChangeLogParser() {
         dateUtil = new DateUtil();
     }
-    
     public boolean writeChangeLog(File file, SimpleClearCaseChangeLogSet set,
                                                                TaskListener listener) throws IOException {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();

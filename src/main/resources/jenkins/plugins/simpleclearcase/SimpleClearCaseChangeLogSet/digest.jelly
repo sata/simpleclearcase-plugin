@@ -29,14 +29,24 @@
       ${%No changes.}
     </j:when>
     <j:otherwise>
-      Changes
+      <h2>Changes</h2>
+
+      <!--  hard coded view limit, this is to avoid flodding the changelog page. -->
+      <j:set var="maxEntries" value="${99}"/>
+      <j:choose>
+        <j:when test="${it.items.size() >= maxEntries}">    
+          <h5>ChangeLog is limited to ${maxEntries + 1} entries.</h5>
+          <b>Number of entries in changelog is: ${it.items.size()}.</b>
+        </j:when>
+      </j:choose>  
+      
       <ol>
-        <j:forEach var="cs" items="${it.items}" varStatus="loop">
+         <j:forEach var="cs" items="${it.items}" varStatus="loop" end="${maxEntries}">
           <li>
           	<b>${cs.date} <br/>
           	${cs.operation}: ${%Version} ${cs.version} by <a href="${rootURL}/${cs.author.url}/">${cs.author}</a>: </b> ${cs.msgAnnotated}
             <br/>
-			
+                        
 			<!-- add edittypes later on
 			<j:forEach var="item" items="${cs.items}">
         		<tr>
@@ -52,7 +62,15 @@
             (<a href="changes#detail${loop.index}">detail</a>)
           </li>
         </j:forEach>
-      </ol>
+      </ol>        
+
+      <j:choose>
+        <j:when test="${it.items.size() >= maxEntries}">    
+          <h5>ChangeLog is limited to ${maxEntries + 1} entries.</h5>
+          <b>Number of entries in changelog is: ${it.items.size()}.</b>
+        </j:when>
+      </j:choose>      
+       
     </j:otherwise>
   </j:choose>
 </j:jelly>

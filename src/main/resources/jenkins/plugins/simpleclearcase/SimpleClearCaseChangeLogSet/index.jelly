@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
 -->
-<!-- this persents the summary -->
+<!-- this this presents the summary -->
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
   <h2>${%Summary}</h2>
   <ol>
@@ -29,8 +29,19 @@
       <li><st:out value="${cs.msg}"/></li>
     </j:forEach>
   </ol>
+  
+  <!--  hard coded view limit, this is to avoid flodding the changelog page. -->
+  <j:set var="maxEntries" value="${99}"/>  
+  <j:choose>
+    <j:when test="${it.items.size() >= maxEntries}">    
+      <h5>ChangeLog is limited to ${maxEntries + 1} entries.</h5>
+      <b>Number of entries in changelog is: ${it.items.size()}.</b>
+    </j:when>
+  </j:choose>      
+
+
   <table class="pane" style="border:none">
-    <j:forEach var="cs" items="${it.items}" varStatus="loop">
+    <j:forEach var="cs" items="${it.items}" varStatus="loop" end="${maxEntries}">
       <tr class="pane">
         <td colspan="2" class="changeset">
           <a name="detail${loop.index}"></a>
@@ -58,4 +69,11 @@
       </j:forEach>-->
     </j:forEach>
   </table>
+
+  <j:choose>
+    <j:when test="${it.items.size() >= maxEntries}">    
+      <h5>ChangeLog is limited to ${maxEntries + 1} entries.</h5>
+      <b>Number of entries in changelog is: ${it.items.size()}.</b>
+    </j:when>
+  </j:choose>      
 </j:jelly>

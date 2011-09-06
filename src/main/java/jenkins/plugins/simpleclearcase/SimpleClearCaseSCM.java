@@ -119,7 +119,8 @@ public class SimpleClearCaseSCM extends SCM {
         
         if (lastBuild == null) {
             DebugHelper.info(listener, "%s: This is the first build as there isn't any previous build, we return BUILD_NOW", LOG_COMPARE_REMOTE_REVISION_WITH);
-            return PollingResult.BUILD_NOW;
+            //XXX improvements to check mechanism
+            return new PollingResult(PollingResult.Change.SIGNIFICANT);
         } 
         
         DebugHelper.info(listener, "%s: Last build: #%s", LOG_COMPARE_REMOTE_REVISION_WITH, lastBuild.getNumber());
@@ -136,10 +137,12 @@ public class SimpleClearCaseSCM extends SCM {
                                                                                          baselineCommits);
         // meaning that there are no more entries from the time of last build,
         // hence we don't build
+        // XXX this never happends as -since flag always include at least one entry
         if (remoteRevCommits.isDatesEmpty() == true) {
             DebugHelper.info(listener, "%s: There is no later commits, remoteRevisionCommits dates are null returning NO_CHANGES",
                                                                                                 LOG_COMPARE_REMOTE_REVISION_WITH);
-            return PollingResult.NO_CHANGES;
+            //XXX improvements to check mechanism
+            return new PollingResult(baseline, new SimpleClearCaseRevisionState(remoteRevCommits), PollingResult.Change.NONE);
         }
 
         DebugHelper.info(listener, "%s: Remote revision date time is:%s",
@@ -154,7 +157,8 @@ public class SimpleClearCaseSCM extends SCM {
         if (getDateUtil().anyDateBefore(remoteRevCommits, new Date(), PropUtils.getQuietPeriod()) == false) {
             DebugHelper.info(listener, "%s: Still in quiet period, returning NO_CHANGES", 
                                                                         LOG_COMPARE_REMOTE_REVISION_WITH);
-            return PollingResult.NO_CHANGES;
+            //XXX improvements to check mechanism
+            return new PollingResult(baseline, new SimpleClearCaseRevisionState(remoteRevCommits), PollingResult.Change.NONE);
         }
 
         // if baseline has a load rule which its date is before the date of the
@@ -162,11 +166,13 @@ public class SimpleClearCaseSCM extends SCM {
         if (baselineCommits.isBefore(remoteRevCommits) == true) {
             DebugHelper.info(listener, "%s: There are new commits, baseline commit dates for load rule " +
             		           "is before remote, returning BUILD_NOW", LOG_COMPARE_REMOTE_REVISION_WITH);
-            return PollingResult.BUILD_NOW;
+            //XXX improvements to check mechanism
+            return new PollingResult(baseline, new SimpleClearCaseRevisionState(remoteRevCommits), PollingResult.Change.SIGNIFICANT);
         } else {
             DebugHelper.info(listener, "%s: Baseline build dates are equal or newer than repo, " +
             		                           " returning NO_CHANGES", LOG_COMPARE_REMOTE_REVISION_WITH);
-            return PollingResult.NO_CHANGES;
+            //XXX improvements to check mechanism
+            return new PollingResult(baseline, new SimpleClearCaseRevisionState(remoteRevCommits), PollingResult.Change.NONE);
         }
     }
 
@@ -191,6 +197,11 @@ public class SimpleClearCaseSCM extends SCM {
 
             DebugHelper.info(listener,"%s: Fetched Dates from previous builds changelog: %s",
                                                                        LOG_CHECKOUT, changelogSetCommits);
+            
+            //XXX Improvement with addActio 
+            build.addAction(new SimpleClearCaseSCMTagAction(build, changelogSetCommits));
+            DebugHelper.info(listener, "%s: Added changelogSetCommits to build as Action, %s",
+                                                                       LOG_CHECKOUT, changelogSetCommits);
         } else {
             DebugHelper.info(listener, "%s: There is no Previous build or its empty, we invoke lshistory with null date",
                                                                                                             LOG_CHECKOUT);
@@ -203,6 +214,7 @@ public class SimpleClearCaseSCM extends SCM {
                                                                   SimpleClearCaseSCM.CHANGELOGSET_ORDER));
         // create the set with entries
         SimpleClearCaseChangeLogSet set = new SimpleClearCaseChangeLogSet(build, entries);
+        
         return ((SimpleClearCaseChangeLogParser) createChangeLogParser()).writeChangeLog(changelogFile, set, listener);
     }
 

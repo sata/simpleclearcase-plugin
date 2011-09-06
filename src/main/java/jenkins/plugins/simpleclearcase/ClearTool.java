@@ -65,7 +65,6 @@ public class ClearTool {
     private static final String PARAM_FMT     = "-fmt";
     private static final String PARAM_NCO     = "-nco";
     private static final String PARAM_RECURSE = "-recurse";
-    private static final String PARAM_LAST    = "-last";
     private static final String PARAM_EXEC    = "-exec";
 
     private static final String LSHISTORY_ENTRY_DATE_FORMAT = "yyyyMMdd.HHmmss";

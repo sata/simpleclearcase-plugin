@@ -4,11 +4,11 @@ import hudson.model.AbstractBuild;
 import hudson.scm.AbstractScmTagAction;
 
 public class SimpleClearCaseSCMTagAction extends AbstractScmTagAction {
-    private LoadRuleDateMap map;
+    private SimpleClearCaseRevisionState state;
     
-    protected SimpleClearCaseSCMTagAction(AbstractBuild build, LoadRuleDateMap map) {
+    protected SimpleClearCaseSCMTagAction(AbstractBuild build, SimpleClearCaseRevisionState state) {
         super(build);
-        this.map = map;
+        this.state = state;
     }
 
     public String getDisplayName() {
@@ -22,18 +22,14 @@ public class SimpleClearCaseSCMTagAction extends AbstractScmTagAction {
     @Override
     public boolean isTagged() {
 
-        if (map == null) {
+        if (state == null) {
             return false;
         }
         
-        if (map.isDatesEmpty() == false) {
+        if (state.getLoadRuleDateMap().isDatesEmpty() == false) {
             return false;
         } 
         
         return true;
-    }
-    
-    public LoadRuleDateMap getLoadRuleDateMap() {
-        return map;
     }
 }

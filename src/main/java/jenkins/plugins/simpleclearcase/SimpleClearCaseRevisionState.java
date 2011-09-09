@@ -24,8 +24,10 @@
 
 package jenkins.plugins.simpleclearcase;
 
+import java.util.Collection;
 import java.util.Date;
 
+import hudson.model.Action;
 import hudson.scm.SCMRevisionState;
 
 /**
@@ -33,11 +35,13 @@ import hudson.scm.SCMRevisionState;
  * date on a specific load rule path. Meaning that if a build has multiple load rules to check
  *  we have to compare the latest commit date for each load rule individually. Hence the Map.
  */
-public class SimpleClearCaseRevisionState extends SCMRevisionState {
+public class SimpleClearCaseRevisionState extends SCMRevisionState implements Action {
     private LoadRuleDateMap map;
+    private int buildNumber;
 
-    public SimpleClearCaseRevisionState(LoadRuleDateMap map) {
+    public SimpleClearCaseRevisionState(LoadRuleDateMap map, int buildNumber) {
         this.map = map;
+        this.buildNumber = buildNumber;
     }
 
     public SimpleClearCaseRevisionState() {
@@ -54,5 +58,13 @@ public class SimpleClearCaseRevisionState extends SCMRevisionState {
 
     public LoadRuleDateMap getLoadRuleDateMap() {
         return map;
+    }
+    
+    public Collection<Date> getDates() {
+        return map.getDates();
+    }
+    
+    public int getBuildNumber() {
+        return buildNumber;
     }
 }

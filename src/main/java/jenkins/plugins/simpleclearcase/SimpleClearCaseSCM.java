@@ -84,96 +84,65 @@ public class SimpleClearCaseSCM extends SCM {
     @Override
     public SCMRevisionState calcRevisionsFromBuild(AbstractBuild<?, ?> build, Launcher launcher, 
                                          TaskListener listener) throws IOException, InterruptedException {
-
-        if (build == null) {
-            DebugHelper.info(listener, "%s: Build is null, returning null", LOG_CALC_REVISIONS_FROM_BUILD);
-            return null;
-        }
-
-
-        if (build.getChangeSet().isEmptySet() == true) {
-            // if the changeset is empty then we cant give any revision state
-            DebugHelper.info(listener, "%s: Build lacks a changeSet, returning null, buildNumber is: %d", LOG_CALC_REVISIONS_FROM_BUILD, build.getNumber());
-            return null;
-        } 
-
-
-        // fetch the latest commit dates from the last build for comparison
-        SimpleClearCaseChangeLogSet set = (SimpleClearCaseChangeLogSet) build.getChangeSet();
-        LoadRuleDateMap changeSetCommits = set.getLatestCommitDates(getLoadRulesAsList());
-
-        // info purposes
-        DebugHelper.info(listener, "%s: Latest commit from builds changeSet: %s", LOG_CALC_REVISIONS_FROM_BUILD, changeSetCommits);
-
-        return new SimpleClearCaseRevisionState(changeSetCommits);
+        DebugHelper.info(listener, "%s: Since we add RevisisonState as an action in checkout this method " + 
+                                                        "should not be invoked", LOG_CALC_REVISIONS_FROM_BUILD);
+        return null;
     }
 
 
     @Override
     protected PollingResult compareRemoteRevisionWith(AbstractProject<?, ?> project, Launcher launcher,
-                                  FilePath workspace, TaskListener listener, SCMRevisionState baseline)
+                                  FilePath workspace, TaskListener listener, SCMRevisionState scmRevisionState)
                                                                 throws IOException, InterruptedException {
-
-        // if there is no baseline it means we haven't built before, hence build
+        ClearTool ct = new ClearTool(launcher, listener, workspace, viewname);
         final AbstractBuild<?, ?> lastBuild = project.getLastBuild();
         
-        if (lastBuild == null) {
-            DebugHelper.info(listener, "%s: This is the first build as there isn't any previous build, we return BUILD_NOW", LOG_COMPARE_REMOTE_REVISION_WITH);
-            //XXX improvements to check mechanism
-            return new PollingResult(PollingResult.Change.SIGNIFICANT);
-        } 
+        SimpleClearCaseRevisionState baseline = (SimpleClearCaseRevisionState) scmRevisionState;
+        SimpleClearCaseRevisionState remote = null;
+        LoadRuleDateMap baselineLRMap = baseline.getLoadRuleDateMap();
+        PollingResult.Change change;
         
         DebugHelper.info(listener, "%s: Last build: #%s", LOG_COMPARE_REMOTE_REVISION_WITH, lastBuild.getNumber());
+        DebugHelper.info(listener, "%s: Baseline LR-mapping from RevisionState is: %s",
+                                                       LOG_COMPARE_REMOTE_REVISION_WITH, baselineLRMap);
 
-        ClearTool ct = new ClearTool(launcher, listener, workspace, viewname);
-        LoadRuleDateMap baselineCommits = ((SimpleClearCaseRevisionState) baseline).getLoadRuleDateMap();
-
-        DebugHelper.info(listener, "%s: Baseline commits from RevisionState is: %s",
-                                                       LOG_COMPARE_REMOTE_REVISION_WITH, baselineCommits);
+        /// TODO remove this after it works
+        if (baselineLRMap.isDatesEmpty() == true) {
+            DebugHelper.info(listener, "%s: baselineLRMap contains a or several empty dates, hence we fetch remote state : %s",
+                                                                                LOG_COMPARE_REMOTE_REVISION_WITH, baselineLRMap);
+        } 
 
         // we send baselines LoadRuleDateMap to cleartool to limit the size of
-        // the data fetched from lshistory
-        LoadRuleDateMap remoteRevCommits = ct.getLatestCommitDates(getLoadRulesAsList(), 
-                                                                                         baselineCommits);
-        // meaning that there are no more entries from the time of last build,
-        // hence we don't build
-        // XXX this never happends as -since flag always include at least one entry
-        if (remoteRevCommits.isDatesEmpty() == true) {
-            DebugHelper.info(listener, "%s: There is no later commits, remoteRevisionCommits dates are null returning NO_CHANGES",
+        // the data fetched from lshistory. To speed up the polling.
+        LoadRuleDateMap remoteLRMap = ct.getLatestCommitDates(getLoadRulesAsList(), baselineLRMap);
+        
+        // if meaning that baseline is the latest revision state, we don't build. Since 
+        if (remoteLRMap.isDatesEmpty() == true) {
+            DebugHelper.info(listener, "%s: There is no new commits, remoteLRMap dates are null returning NO_CHANGES",
                                                                                                 LOG_COMPARE_REMOTE_REVISION_WITH);
-            //XXX improvements to check mechanism
-            return new PollingResult(baseline, new SimpleClearCaseRevisionState(remoteRevCommits), PollingResult.Change.NONE);
-        }
-
-        DebugHelper.info(listener, "%s: Remote revision date time is:%s",
-                                                 LOG_COMPARE_REMOTE_REVISION_WITH, remoteRevCommits);
-
-        /*
-           we need a quiet period to be sure that someone isn't in the middle of commit session.
-           quiet time works as we compare remoteRevisionDate added with quiet period against current time
-           if it's not before, it means that quiet period has not passed yet, 
-           which means we signal no changes
-         */
-        if (getDateUtil().anyDateBefore(remoteRevCommits, new Date(), PropUtils.getQuietPeriod()) == false) {
-            DebugHelper.info(listener, "%s: Still in quiet period, returning NO_CHANGES", 
-                                                                        LOG_COMPARE_REMOTE_REVISION_WITH);
-            //XXX improvements to check mechanism
-            return new PollingResult(baseline, new SimpleClearCaseRevisionState(remoteRevCommits), PollingResult.Change.NONE);
-        }
+            remote = baseline;
+            change = PollingResult.Change.NONE;
+            
+            return new PollingResult(baseline, remote, change);
+         } else {
+             DebugHelper.info(listener, "%s: remoteLRMap dates:%s",
+                                                 LOG_COMPARE_REMOTE_REVISION_WITH, remoteLRMap);
+         }
 
         // if baseline has a load rule which its date is before the date of the
-        // remote revision then it means there are changes
-        if (baselineCommits.isBefore(remoteRevCommits) == true) {
-            DebugHelper.info(listener, "%s: There are new commits, baseline commit dates for load rule " +
-            		           "is before remote, returning BUILD_NOW", LOG_COMPARE_REMOTE_REVISION_WITH);
-            //XXX improvements to check mechanism
-            return new PollingResult(baseline, new SimpleClearCaseRevisionState(remoteRevCommits), PollingResult.Change.SIGNIFICANT);
+        // remote revision then it means there are changes        
+        if (baselineLRMap.isBefore(remoteLRMap) == true) {
+            DebugHelper.info(listener, "%s: There are new commits, baseline dates for load rule " +
+            		           "is before remote, returning BUILD_NOW with a new remoteLRMap", LOG_COMPARE_REMOTE_REVISION_WITH);
+            change = PollingResult.Change.SIGNIFICANT;
+            remote = new SimpleClearCaseRevisionState(remoteLRMap, baseline.getBuildNumber());
         } else {
             DebugHelper.info(listener, "%s: Baseline build dates are equal or newer than repo, " +
-            		                           " returning NO_CHANGES", LOG_COMPARE_REMOTE_REVISION_WITH);
-            //XXX improvements to check mechanism
-            return new PollingResult(baseline, new SimpleClearCaseRevisionState(remoteRevCommits), PollingResult.Change.NONE);
+            		                           " returning NO_CHANGES with baseline = remote", LOG_COMPARE_REMOTE_REVISION_WITH);
+            change = PollingResult.Change.NONE;
+            remote = baseline;
         }
+        return new PollingResult(baseline, remote, change);
     }
 
     @Override
@@ -183,7 +152,7 @@ public class SimpleClearCaseSCM extends SCM {
         DebugHelper.info(listener, "%s: Starting to 'checkout'", LOG_CHECKOUT);
         ClearTool ct = new ClearTool(launcher, listener, workspace, viewname);
 
-        LoadRuleDateMap changelogSetCommits = null;
+        LoadRuleDateMap previousBuildLRMap = null;
         // we don't have a latest commit date as we haven't tracked the
         // changelog due to the lack of previous builds.
         if (build.getPreviousBuild() != null 
@@ -193,27 +162,31 @@ public class SimpleClearCaseSCM extends SCM {
             // the lshistory output in ClearTool doesn't present information already reviewed
             SimpleClearCaseChangeLogSet previousChangeLogSet = (SimpleClearCaseChangeLogSet) build
                                                                        .getPreviousBuild().getChangeSet();
-            changelogSetCommits = previousChangeLogSet.getLatestCommitDates(getLoadRulesAsList());
+            previousBuildLRMap = previousChangeLogSet.getLatestCommitDates(getLoadRulesAsList());
 
             DebugHelper.info(listener,"%s: Fetched Dates from previous builds changelog: %s",
-                                                                       LOG_CHECKOUT, changelogSetCommits);
-            
-            //XXX Improvement with addActio 
-            build.addAction(new SimpleClearCaseSCMTagAction(build, changelogSetCommits));
-            DebugHelper.info(listener, "%s: Added changelogSetCommits to build as Action, %s",
-                                                                       LOG_CHECKOUT, changelogSetCommits);
+                                                                       LOG_CHECKOUT, previousBuildLRMap);
         } else {
             DebugHelper.info(listener, "%s: There is no Previous build or its empty, we invoke lshistory with null date",
                                                                                                             LOG_CHECKOUT);
         }
 
         List<SimpleClearCaseChangeLogEntry> entries = ct.lshistory(getLoadRulesAsList(), 
-                                                                                     changelogSetCommits);
+                                                                                     previousBuildLRMap);
         // sort the entries according to 'setting'
         Collections.sort(entries, new SimpleClearCaseChangeLogEntryDateComparator(
                                                                   SimpleClearCaseSCM.CHANGELOGSET_ORDER));
         // create the set with entries
         SimpleClearCaseChangeLogSet set = new SimpleClearCaseChangeLogSet(build, entries);
+        
+        // from the entries we just fetch, we build a LR-map to pass it to a revision State.
+        LoadRuleDateMap buildLRMap = set.getLatestCommitDates(getLoadRulesAsList());
+        SimpleClearCaseRevisionState buildRevState = new SimpleClearCaseRevisionState(buildLRMap, build.getNumber());
+        build.addAction(buildRevState);
+        
+        DebugHelper.info(listener, "%s: the add Action buildRevState number is: %d, LRMap is: %s", LOG_CHECKOUT, 
+                                                    buildRevState.getBuildNumber(), buildRevState.getLoadRuleDateMap());
+        DebugHelper.info(listener, "%s: Added RevisionState in checkout for build", LOG_CHECKOUT);
         
         return ((SimpleClearCaseChangeLogParser) createChangeLogParser()).writeChangeLog(changelogFile, set, listener);
     }

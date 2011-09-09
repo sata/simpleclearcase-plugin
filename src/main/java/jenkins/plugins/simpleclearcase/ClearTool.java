@@ -219,9 +219,16 @@ public class ClearTool {
                 // new paths like "added file directory" are also added to the entry
                 if (tmpEntry != null) {
                     currentEntry = tmpEntry;
-                    ret.add(currentEntry);
-                    DebugHelper.info(listener, "%s: added newly created entry: %s",
-                                   LOG_LSHISTORY_PRIVATE, dateUtil.formatDate(currentEntry.getDate()));
+                    
+                    // XXX Improvement as ClearTool -since is inclusive with the date we remove those 
+                    // element which has the same date as since, to avoid entries following onto several changelogs
+                    // if since is null, it means we havent fetched entries from a specific date, hence no comparison is needed
+                    if (since == null || currentEntry.getDate().compareTo(since) != 0) {
+                        ret.add(currentEntry);
+                    }
+                    // XXX if debug is neccessary then uncomment this
+//                    DebugHelper.info(listener, "%s: added newly created entry: %s",
+//                                   LOG_LSHISTORY_PRIVATE, dateUtil.formatDate(currentEntry.getDate()));
                 } else {
                     DebugHelper.error(listener, "%s: Wasn't able to parse row, hence we skip it, " 
                                                         + "line: %s", LOG_LSHISTORY_PRIVATE, readline);

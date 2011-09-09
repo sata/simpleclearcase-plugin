@@ -17,10 +17,10 @@
 
 <developers>
   <developer>
-  <id>sata_</id>
-  <name>Sam Tavakoli</name>
-  <email>sam@tavakoli.se</email>
-  <timezone>+1</timezone>
+    <id>sata_</id>
+    <name>Sam Tavakoli</name>
+    <email>sam@tavakoli.se</email>
+    <timezone>+1</timezone>
   </developer>
 </developers>
 

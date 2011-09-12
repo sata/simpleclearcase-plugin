@@ -30,10 +30,11 @@ import jenkins.plugins.simpleclearcase.SimpleClearCaseSCM;
 import org.jvnet.localizer.ResourceBundleHolder;
 
 public class PropUtils {
-	private static final String LOCALE  						= "Locale";
-	private static final String TIMEZONE						= "TimeZone";
-	private static final String QUIET_PERIOD					= "QuietPeriod";
-	private static final String LSHISTORY_LAST_NUM_EVENTS_VALUE = "LshistoryLastNumEventsValue";
+	private static final String LOCALE                            = "Locale";
+	private static final String TIMEZONE                          = "TimeZone";
+	private static final String QUIET_PERIOD                      = "QuietPeriod";
+	private static final String LSHISTORY_LAST_NUM_EVENTS_VALUE   = "LshistoryLastNumEventsValue";
+	private static final String FIRST_FETCH_MAX_CHANGELOG_ENTRIES = "FirstFetchMaximumChangelogEntries";
 	
 	public static String getLocale() {
 		return ResourceBundleHolder.get(SimpleClearCaseSCM.class).format(LOCALE);
@@ -49,5 +50,9 @@ public class PropUtils {
 	
 	public static String getLshistoryLastNumEventsValue() {
 		return ResourceBundleHolder.get(ClearTool.class).format(LSHISTORY_LAST_NUM_EVENTS_VALUE);
+	}
+	
+	public static int getMaxEntriesFromChangeLog() {
+	    return Integer.parseInt(ResourceBundleHolder.get(SimpleClearCaseSCM.class).format(FIRST_FETCH_MAX_CHANGELOG_ENTRIES));
 	}
 }

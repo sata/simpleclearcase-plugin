@@ -256,10 +256,10 @@ public class ClearTool {
         fmt.setTimeZone(TimeZone.getTimeZone(PropUtils.getTimeZone()));
 
         cmd.add(LSHISTORY);
-        cmd.add(PARAM_RECURSE);
         
         if (since != null) {
-            // if the date is null, there is no time bound on lshistory
+            cmd.add(PARAM_RECURSE);
+            // if the date is null, there is no time bound on lshistory            
             cmd.add(PARAM_SINCE, fmt.format(since).toLowerCase());
         } else {
             // if it's the first build there isn't any previous date to take as starting point

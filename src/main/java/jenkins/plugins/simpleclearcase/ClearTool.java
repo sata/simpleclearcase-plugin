@@ -65,6 +65,7 @@ public class ClearTool {
     private static final String PARAM_FMT     = "-fmt";
     private static final String PARAM_NCO     = "-nco";
     private static final String PARAM_RECURSE = "-recurse";
+    private static final String PARAM_LAST    = "-last";
     private static final String PARAM_EXEC    = "-exec";
 
     private static final String LSHISTORY_ENTRY_DATE_FORMAT = "yyyyMMdd.HHmmss";
@@ -260,8 +261,15 @@ public class ClearTool {
         if (since != null) {
             // if the date is null, there is no time bound on lshistory
             cmd.add(PARAM_SINCE, fmt.format(since).toLowerCase());
-        } 
-
+        } else {
+            // if it's the first build there isn't any previous date to take as starting point
+            // but we don't want a gigantic set, so we also add LAST parameter,
+            // to limit down the result set
+            cmd.add(PARAM_LAST);
+            cmd.add(PropUtils.getLshistoryLastNumEventsValue());
+        }
+        
+        
         cmd.add(PARAM_FMT);
         cmd.add(SimpleClearCaseChangeLogEntry.LSHISTORY_FORMATTING);
         cmd.add(PARAM_NCO);

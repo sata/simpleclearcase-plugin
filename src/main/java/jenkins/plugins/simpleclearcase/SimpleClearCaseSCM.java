@@ -110,7 +110,7 @@ public class SimpleClearCaseSCM extends SCM {
         if (baselineLRMap.isDatesEmpty() == true) {
             DebugHelper.info(listener, "%s: baselineLRMap contains a or several empty dates, hence we fetch remote state : %s",
                                                                                 LOG_COMPARE_REMOTE_REVISION_WITH, baselineLRMap);
-        } 
+        }  
 
         // we send baselines LoadRuleDateMap to cleartool to limit the size of
         // the data fetched from lshistory. To speed up the polling.

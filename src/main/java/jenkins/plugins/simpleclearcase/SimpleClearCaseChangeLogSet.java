@@ -26,12 +26,9 @@ package jenkins.plugins.simpleclearcase;
 
 import hudson.model.AbstractBuild;
 
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
-import jenkins.plugins.simpleclearcase.util.DateUtil;
 
 public class SimpleClearCaseChangeLogSet extends hudson.scm.ChangeLogSet<SimpleClearCaseChangeLogEntry> {
     private List<SimpleClearCaseChangeLogEntry> entries;

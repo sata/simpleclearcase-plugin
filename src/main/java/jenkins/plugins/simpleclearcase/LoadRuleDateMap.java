@@ -86,10 +86,6 @@ public class LoadRuleDateMap {
 		return ret;
 	}
 
-	public void copyMapping(LoadRuleDateMap another) {
-	    this.map.putAll(another.map);
-	}
-	
 	public String toString() {
 		return Arrays.toString(getAsList().toArray());
 	}

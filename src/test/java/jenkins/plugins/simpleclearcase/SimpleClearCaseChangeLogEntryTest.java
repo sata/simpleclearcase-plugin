@@ -43,7 +43,7 @@ public class SimpleClearCaseChangeLogEntryTest {
     
 	@Test
 	public void testParserFetchDate() throws IOException, ParserConfigurationException, SAXException {
-		SimpleClearCaseChangeLogSet set = parserTest.readSet(parserTest.CHANGELOG_SMALL);
+		SimpleClearCaseChangeLogSet set = parserTest.readSet(SimpleClearCaseChangeLogParserTest.CHANGELOG_SMALL);
 
 		Calendar cal = new GregorianCalendar(2011, Calendar.JUNE, 20, 13, 49, 53);
 		cal.setTimeZone(TimeZone.getTimeZone(PropUtils.getTimeZone()));
@@ -57,7 +57,7 @@ public class SimpleClearCaseChangeLogEntryTest {
 	
 	@Test
 	public void testParserFetchUser() throws IOException, ParserConfigurationException, SAXException {
-		SimpleClearCaseChangeLogSet set = parserTest.readSet(parserTest.CHANGELOG_SMALL);
+		SimpleClearCaseChangeLogSet set = parserTest.readSet(SimpleClearCaseChangeLogParserTest.CHANGELOG_SMALL);
 
 		Assert.assertEquals("Fetched username doesn't match", "etavsam", set.getEntries().get(0).getUser());
 	}

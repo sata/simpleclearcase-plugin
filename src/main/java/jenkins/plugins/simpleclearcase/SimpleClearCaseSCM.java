@@ -136,7 +136,8 @@ public class SimpleClearCaseSCM extends SCM {
         ClearTool ct = new ClearTool(launcher, listener, workspace, viewname);
 
         List<SimpleClearCaseChangeLogEntry> entries;
-                
+        LoadRuleDateMap buildLRMap;
+        
         // we don't have a latest commit date as we haven't tracked the
         // changelog due to the lack of previous builds.
         if (build.getPreviousBuild() != null && build.getPreviousBuild().getAction(SimpleClearCaseRevisionState.class) != null) {
@@ -146,16 +147,25 @@ public class SimpleClearCaseSCM extends SCM {
                                                                 LOG_CHECKOUT, previousBuildLRMap);
             entries = ct.lshistory(getLoadRulesAsList(), previousBuildLRMap);
 
+            // from the entries we just fetched, we build a LR-map for the new revisionState
+            // this needs to happen before we strip the previous LRMapping values from changelog
+            buildLRMap = ListUtil.getLatestCommitDates(entries, getLoadRulesAsList());
+            
             //as we have fetched entries with the previous LRMapping we strip them away
             //before writing down to the changelog file
             if (ListUtil.removeEntries(entries, previousBuildLRMap, getLoadRulesAsList()) != true) {
                 DebugHelper.error(listener, "%s: wasn't able to remove previousBuildLRMap entries from list", LOG_CHECKOUT);
             }
+            
+            
         } else {
             DebugHelper.info(listener, "%s: There is no Previous build or there isn't any RevisionState added, " + 
                                                                 " we invoke lshistory with null date", LOG_CHECKOUT);
             //if we don't have any RevisionState from previous build.
             entries = ct.lshistory(getLoadRulesAsList(), null);
+
+            // from the entries we just fetched, we build a LR-map for the new revisionState
+            buildLRMap = ListUtil.getLatestCommitDates(entries, getLoadRulesAsList());
         }
 
         // sort the entries according to 'setting'
@@ -163,9 +173,6 @@ public class SimpleClearCaseSCM extends SCM {
                                                                   SimpleClearCaseSCM.CHANGELOGSET_ORDER));
         // create the set with entries
         SimpleClearCaseChangeLogSet set = new SimpleClearCaseChangeLogSet(build, entries);
-
-        // from the entries we just fetched, we build a LR-map for the new revisionState
-        LoadRuleDateMap buildLRMap = set.getLatestCommitDates(getLoadRulesAsList());
         
         SimpleClearCaseRevisionState buildRevisionState = new SimpleClearCaseRevisionState(buildLRMap, build.getNumber());
         build.addAction(buildRevisionState);

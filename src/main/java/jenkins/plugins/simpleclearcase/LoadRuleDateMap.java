@@ -58,18 +58,6 @@ public class LoadRuleDateMap {
 	}
 	
 	/**
-	 * @return true if there is a date who isn't null
-	 */
-	public boolean isAnyDateSet() {
-		for (Date date : map.values()) {
-			if (date != null) {
-				return true;
-			}
-		}
-		return false;
-	}
-	
-	/**
 	 * @param compare the comparison LoadRuleDateMap
 	 * @return true if this LoadRuleDateMap has a date before compare date, for a specific load rule  
 	 */

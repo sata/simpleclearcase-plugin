@@ -1,6 +1,7 @@
 package jenkins.plugins.simpleclearcase.util;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import jenkins.plugins.simpleclearcase.LoadRuleDateMap;
@@ -33,4 +34,36 @@ public class ListUtil {
         }
         return entries.removeAll(entriesToRemove);
     }
+
+    /**
+     * @param loadRules
+     * @return a LoadRuleDateMap which maps a load rule against the latest commit date of that 
+     *         specific load rule
+     */
+    public static LoadRuleDateMap getLatestCommitDates(List<SimpleClearCaseChangeLogEntry> entries, List<String> loadRules) {
+        LoadRuleDateMap ret = new LoadRuleDateMap();
+
+        for (String lr : loadRules) {
+            ret.setBuildTime(lr, getLatestCommitDate(entries, lr));
+        }
+        return ret;
+    }
+
+    /**
+     * @param loadRule
+     * @return the latest commit date from all of the entries who are fetched from load rule 'loadrule'
+     */
+    private static Date getLatestCommitDate(List<SimpleClearCaseChangeLogEntry> entries, String loadRule) {
+        List<SimpleClearCaseChangeLogEntry> prefixedEntries = 
+                new ArrayList<SimpleClearCaseChangeLogEntry>();
+
+        for (SimpleClearCaseChangeLogEntry entry : entries) {
+            if (entry.containsPathWithPrefix(loadRule) == true) {
+                prefixedEntries.add(entry);
+            }
+        }
+        return DateUtil.getLatestDate(prefixedEntries);
+    }
+
+
 }

@@ -46,36 +46,6 @@ public class SimpleClearCaseChangeLogSet extends hudson.scm.ChangeLogSet<SimpleC
         }
     }
 
-    /**
-     * @param loadRules
-     * @return a LoadRuleDateMap which maps a load rule against the latest commit date of that 
-     *         specific load rule
-     */
-    public LoadRuleDateMap getLatestCommitDates(List<String> loadRules) {
-        LoadRuleDateMap ret = new LoadRuleDateMap();
-
-        for (String lr : loadRules) {
-            ret.setBuildTime(lr, getLatestCommitDate(lr));
-        }
-        return ret;
-    }
-
-    /**
-     * @param loadRule
-     * @return the latest commit date from all of the entries who are fetched from load rule 'loadrule'
-     */
-    private Date getLatestCommitDate(String loadRule) {
-        List<SimpleClearCaseChangeLogEntry> prefixedEntries = 
-                                                           new ArrayList<SimpleClearCaseChangeLogEntry>();
-
-        for (SimpleClearCaseChangeLogEntry entry : entries) {
-            if (entry.containsPathWithPrefix(loadRule) == true) {
-                prefixedEntries.add(entry);
-            }
-        }
-        return DateUtil.getLatestDate(prefixedEntries);
-    }
-
     public Iterator<SimpleClearCaseChangeLogEntry> iterator() {
         return entries.iterator();
     }

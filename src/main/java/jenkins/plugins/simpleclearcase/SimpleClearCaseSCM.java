@@ -34,6 +34,7 @@ import java.util.Set;
 
 import jenkins.plugins.simpleclearcase.SimpleClearCaseChangeLogSet;
 import jenkins.plugins.simpleclearcase.util.DebugHelper;
+import jenkins.plugins.simpleclearcase.util.ListUtil;
 import jenkins.plugins.simpleclearcase.util.OsUtil;
 
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -144,6 +145,12 @@ public class SimpleClearCaseSCM extends SCM {
             DebugHelper.info(listener,"%s: Fetched Dates from previous builds RevisionState LRMap: %s",
                                                                 LOG_CHECKOUT, previousBuildLRMap);
             entries = ct.lshistory(getLoadRulesAsList(), previousBuildLRMap);
+
+            //as we have fetched entries with the previous LRMapping we strip them away
+            //before writing down to the changelog file
+            if (ListUtil.removeEntries(entries, previousBuildLRMap, getLoadRulesAsList()) != true) {
+                DebugHelper.error(listener, "%s: wasn't able to remove previousBuildLRMap entries from list", LOG_CHECKOUT);
+            }
         } else {
             DebugHelper.info(listener, "%s: There is no Previous build or there isn't any RevisionState added, " + 
                                                                 " we invoke lshistory with null date", LOG_CHECKOUT);
@@ -156,7 +163,7 @@ public class SimpleClearCaseSCM extends SCM {
                                                                   SimpleClearCaseSCM.CHANGELOGSET_ORDER));
         // create the set with entries
         SimpleClearCaseChangeLogSet set = new SimpleClearCaseChangeLogSet(build, entries);
-        
+
         // from the entries we just fetched, we build a LR-map for the new revisionState
         LoadRuleDateMap buildLRMap = set.getLatestCommitDates(getLoadRulesAsList());
         

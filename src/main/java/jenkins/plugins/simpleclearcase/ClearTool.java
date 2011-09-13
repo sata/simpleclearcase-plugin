@@ -76,16 +76,12 @@ public class ClearTool {
     private FilePath     workspace;
     private String       viewname;
 
-    //due to syncronization problem with Calendar we need to have an private instance to DateUtil
-    private DateUtil    dateUtil;
-    
     public ClearTool(Launcher launcher, TaskListener listener, FilePath workspace, 
                                           String viewname) throws InterruptedException, IOException {
         this.launcher  = launcher;
         this.listener  = listener;
         this.workspace = workspace;
         this.viewname  = viewname.trim();
-        this.dateUtil  = new DateUtil();
     }
 
     /**
@@ -220,13 +216,7 @@ public class ClearTool {
                 // new paths like "added file directory" are also added to the entry
                 if (tmpEntry != null) {
                     currentEntry = tmpEntry;
-                    
-                    // As ClearTool -since is inclusive with the date we remove those 
-                    // element which has the same date as since, to avoid entries following onto several changelogs
-                    // if since is null, it means we havent fetched entries from a specific date, hence no comparison is needed
-                    if (since == null || currentEntry.getDate().compareTo(since) != 0) {
-                        ret.add(currentEntry);
-                    }
+                    ret.add(currentEntry);
                 } else {
                     DebugHelper.error(listener, "%s: Wasn't able to parse row, hence we skip it, " 
                                                         + "line: %s", LOG_LSHISTORY_PRIVATE, readline);

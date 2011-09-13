@@ -58,11 +58,11 @@ public class LoadRuleDateMap {
 	}
 	
 	/**
-	 * @return true if any load rule is missing a date value. otherwise false 
+	 * @return true if there is a date who isn't null
 	 */
-	public boolean isDatesEmpty() {
+	public boolean isAnyDateSet() {
 		for (Date date : map.values()) {
-			if (date == null) {
+			if (date != null) {
 				return true;
 			}
 		}
@@ -74,8 +74,8 @@ public class LoadRuleDateMap {
 	 * @return true if this LoadRuleDateMap has a date before compare date, for a specific load rule  
 	 */
 	public boolean isBefore(LoadRuleDateMap compare) {
-		
-		for (Map.Entry<String, Date> entry : map.entrySet()) {
+	    for (Map.Entry<String, Date> entry : map.entrySet()) {
+	        
 			//fetch the date for the specific load rule
 			Date compareDate = compare.getBuiltTime(entry.getKey());
 
@@ -98,6 +98,10 @@ public class LoadRuleDateMap {
 		return ret;
 	}
 
+	public void copyMapping(LoadRuleDateMap another) {
+	    this.map.putAll(another.map);
+	}
+	
 	public String toString() {
 		return Arrays.toString(getAsList().toArray());
 	}

@@ -68,7 +68,7 @@ public class LoadRuleDateMap {
 			Date compareDate = compare.getBuiltTime(entry.getKey());
 
 			//compare the entries date for the load rule against the comparisons date
-			if (entry.getValue().before(compareDate)) {
+			if (compareDate != null && entry.getValue().before(compareDate)) {
 				return true;
 			}
 		}

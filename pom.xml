@@ -10,7 +10,7 @@
   <groupId>jenkins.plugins</groupId>
   <artifactId>simpleclearcase</artifactId>
   <name>Simple Dynamic ClearCase</name>
-  <version>pppppppppppppppppppp</version>
+  <version>1.1-SNAPSHOT</version>
   <packaging>hpi</packaging>
   <url>https://wiki.jenkins-ci.org/display/JENKINS/SimpleClearCase-Plugin</url>  
 

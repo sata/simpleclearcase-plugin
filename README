@@ -3,14 +3,18 @@ This plugin interfaces Jenkins against a dynamic base view, Clearcase SCM. Its '
 As the view is dynamic, the plugin doesn't take any snapshots of the source code, the checkout mechanism will only review the clear tool lshistory over the specified 'load rules'. The load rules are in simple terms only paths inside of the view to specific code bases. 
 
 
-Future work:
+ChangeLog:
 
-* Add support for editTypes
-* manage output properties better from lshistory:
-   "Added directory element"
-   "Added file element"
-   "Removed directory element"
-   "Uncataloged directory element"
-   "Removed directory element"
+Version 1.2
 
-Currently the last three elements are ignored and the first two are just fileelements in an entry.
+* Added optional filter function for rmbranch, mkbranch
+* Added capability to watch specific ClearCase Branch, instead of all
+* Removed limitation of white space in file paths
+* Added abort exception when checkout failes due to:
+   - incorrect branch
+   - ClearCase error
+* Improved error handling in compareRevision and Checkout
+
+Version 1.0 
+
+First beta version

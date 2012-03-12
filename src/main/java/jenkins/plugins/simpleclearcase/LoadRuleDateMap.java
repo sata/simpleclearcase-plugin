@@ -57,6 +57,10 @@ public class LoadRuleDateMap {
 		return map.values();
 	}
 	
+	public boolean isEmpty() {
+	    return map.isEmpty();
+	}
+	
 	/**
 	 * @param compare the comparison LoadRuleDateMap
 	 * @return true if this LoadRuleDateMap has a date before compare date, for a specific load rule  
@@ -87,6 +91,8 @@ public class LoadRuleDateMap {
 	}
 
 	public String toString() {
+	    if (map.isEmpty()) { return "LoadRuleDateMap is empty"; }
+	    
 		return Arrays.toString(getAsList().toArray());
 	}
 }

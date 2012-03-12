@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>1.452</version><!-- which version of Jenkins is this plugin built against? -->
+    <version>1.428</version><!-- which version of Jenkins is this plugin built against? -->
   </parent>
 
   <groupId>jenkins.plugins</groupId>
@@ -33,21 +33,17 @@
 
   <!-- get every artifact through maven.glassfish.org, which proxies all the artifacts that we need -->
   <repositories>
-     <repository>
-          <id>repo.jenkins-ci.org</id>
-          <url>http://repo.jenkins-ci.org/public/</url>
-     </repository>    
+    <repository>
+      <id>m.g.o-public</id>
+      <url>http://maven.glassfish.org/content/groups/public/</url>
+    </repository>
   </repositories>
 
   <pluginRepositories>
-<!-- <pluginRepository>
+    <pluginRepository>
       <id>m.g.o-public</id>
       <url>http://maven.glassfish.org/content/groups/public/</url>
-    </pluginRepository> -->
-     <pluginRepository>
-        <id>repo.jenkins-ci.org</id>
-        <url>http://repo.jenkins-ci.org/public/</url>
-      </pluginRepository>
+    </pluginRepository>
   </pluginRepositories>
 
   <build>

@@ -40,7 +40,6 @@ import jenkins.plugins.simpleclearcase.util.OsUtil;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
-import hudson.AbortException;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -67,27 +66,22 @@ public class SimpleClearCaseSCM extends SCM {
 
     private String loadRules;
     private String viewname;
-    private String branch;
-    private boolean filter;
-    
         
     @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
 
     @DataBoundConstructor
-    public SimpleClearCaseSCM(String loadRules, String viewname, String branch, boolean filter) {
+    public SimpleClearCaseSCM(String loadRules, String viewname) {
         this.loadRules = loadRules;
         this.viewname = viewname;
-        this.branch = branch;
-        this.filter = filter;
     }
 
     @Override
     public SCMRevisionState calcRevisionsFromBuild(AbstractBuild<?, ?> build, Launcher launcher, 
                                          TaskListener listener) throws IOException, InterruptedException {
-        DebugHelper.info(listener, "%s: Checkout action lacked RevisionState, meaning it is empty, " +
-                                    "Creating an empty baseline", LOG_CALC_REVISIONS_FROM_BUILD);
-        return new SimpleClearCaseRevisionState(build.getNumber());
+        DebugHelper.info(listener, "%s: Since we add RevisisonState as an action in checkout this method " + 
+                                                        "should not be invoked", LOG_CALC_REVISIONS_FROM_BUILD);
+        return null;
     }
 
 
@@ -95,15 +89,14 @@ public class SimpleClearCaseSCM extends SCM {
     protected PollingResult compareRemoteRevisionWith(AbstractProject<?, ?> project, Launcher launcher,
                                   FilePath workspace, TaskListener listener, SCMRevisionState scmRevisionState)
                                                                 throws IOException, InterruptedException {
-        ClearTool ct = new ClearTool(launcher, listener, workspace, viewname, branch, filter);
+        ClearTool ct = new ClearTool(launcher, listener, workspace, viewname);
         final AbstractBuild<?, ?> lastBuild = project.getLastBuild();
         
         SimpleClearCaseRevisionState baseline = (SimpleClearCaseRevisionState) scmRevisionState;
+        LoadRuleDateMap baselineLRMap = baseline.getLoadRuleDateMap();
+        LoadRuleDateMap remoteLRMap;
         SimpleClearCaseRevisionState remote;
         PollingResult.Change change;
-        
-        LoadRuleDateMap remoteLRMap;   
-        LoadRuleDateMap baselineLRMap = baseline.getLoadRuleDateMap();
         
         DebugHelper.info(listener, "%s: Last build: #%s", LOG_COMPARE_REMOTE_REVISION_WITH, lastBuild.getNumber());
         DebugHelper.info(listener, "%s: Baseline LR-mapping from RevisionState is: %s",
@@ -115,26 +108,17 @@ public class SimpleClearCaseSCM extends SCM {
         
         DebugHelper.info(listener, "%s: remoteLRMap is: %s", LOG_COMPARE_REMOTE_REVISION_WITH, remoteLRMap);
         
-        if (baselineLRMap.isEmpty() == true && remoteLRMap.isEmpty() == false) {
-            // if baseline LR map is empty, and remote isn't then there is changes
-            change = PollingResult.Change.SIGNIFICANT;            
-        } else if (baselineLRMap.isBefore(remoteLRMap) == true) {
-            // if baseline has a load rule which its date is before the date of the
-            // remote revision then it means there are changes        
-            change = PollingResult.Change.SIGNIFICANT;
-        } else {
-            // remote isn't newer than baseline
-            change = PollingResult.Change.NONE;
-        }
-        
-        if (change == PollingResult.Change.SIGNIFICANT) {
+        // if baseline has a load rule which its date is before the date of the
+        // remote revision then it means there are changes        
+        if (baselineLRMap.isBefore(remoteLRMap) == true) {
             DebugHelper.info(listener, "%s: There are new commits, baseline dates for load rule " +
             		           "is before remote, returning BUILD_NOW with a new remoteLRMap", LOG_COMPARE_REMOTE_REVISION_WITH);
-            
-            remote = new SimpleClearCaseRevisionState(remoteLRMap, baseline.getBuildNumber());    
+            change = PollingResult.Change.SIGNIFICANT;
+            remote = new SimpleClearCaseRevisionState(remoteLRMap, baseline.getBuildNumber());
         } else {
             DebugHelper.info(listener, "%s: Baseline build dates are equal or newer than repo, " +
             		                           " returning NO_CHANGES with baseline = remote", LOG_COMPARE_REMOTE_REVISION_WITH);
+            change = PollingResult.Change.NONE;
             remote = baseline;
         }
         
@@ -149,8 +133,7 @@ public class SimpleClearCaseSCM extends SCM {
                     BuildListener listener, File changelogFile) throws IOException, InterruptedException {
 
         DebugHelper.info(listener, "%s: Starting to 'checkout'", LOG_CHECKOUT);
-        ClearTool ct = new ClearTool(launcher, listener, workspace, viewname,
-                                     branch, filter);
+        ClearTool ct = new ClearTool(launcher, listener, workspace, viewname);
 
         List<SimpleClearCaseChangeLogEntry> entries;
         LoadRuleDateMap buildLRMap;
@@ -168,10 +151,9 @@ public class SimpleClearCaseSCM extends SCM {
             // this needs to happen before we strip the previous LRMapping values from changelog
             buildLRMap = ListUtil.getLatestCommitDates(entries, getLoadRulesAsList());
             
-            // as we have fetched entries with the previous LRMapping we strip them away
-            // before writing down to the changelog file
-            // we do not invoke removeEntries if there isn't anything to remove
-            if (previousBuildLRMap.isEmpty() == false && ListUtil.removeEntries(entries, previousBuildLRMap, getLoadRulesAsList()) != true) {
+            //as we have fetched entries with the previous LRMapping we strip them away
+            //before writing down to the changelog file
+            if (ListUtil.removeEntries(entries, previousBuildLRMap, getLoadRulesAsList()) != true) {
                 DebugHelper.error(listener, "%s: wasn't able to remove previousBuildLRMap entries from list", LOG_CHECKOUT);
             }
             
@@ -180,18 +162,7 @@ public class SimpleClearCaseSCM extends SCM {
             DebugHelper.info(listener, "%s: There is no Previous build or there isn't any RevisionState added, " + 
                                                                 " we invoke lshistory with null date", LOG_CHECKOUT);
             //if we don't have any RevisionState from previous build.
-            
-            // if lshistory throws IOException is could be that 
-            // there is a glitch with ClearCase, branch doesn't exist or
-            // simply an IO error
-            try {
-                entries = ct.lshistory(getLoadRulesAsList(), null);
-            } catch (IOException e) {
-                String msg = "lshistory action threw IOException So we throw "
-                             + "a AbortException, check log files for details";
-                DebugHelper.info(listener, "%s: %s", LOG_CHECKOUT, msg);
-                throw new AbortException(msg);
-            }
+            entries = ct.lshistory(getLoadRulesAsList(), null);
 
             // from the entries we just fetched, we build a LR-map for the new revisionState
             buildLRMap = ListUtil.getLatestCommitDates(entries, getLoadRulesAsList());
@@ -233,15 +204,7 @@ public class SimpleClearCaseSCM extends SCM {
     public String getLoadRules() {
         return loadRules;
     }
-    
-    public boolean getFilter() {
-        return filter;
-    }
 
-    public String getBranch() {
-        return branch;
-    }
-    
     public List<String> getLoadRulesAsList() {
         return splitLoadRules(loadRules);
     }
@@ -281,7 +244,7 @@ public class SimpleClearCaseSCM extends SCM {
 
         public FormValidation doCheckViewname(@QueryParameter String value)
                                                                 throws InterruptedException, IOException {
-            if (isNullOrEmpty(value)) {
+            if (value == null || value.trim().isEmpty() == true) {
                 return FormValidation.error(Messages.simpleclearcase_viewname_empty());
             }
 
@@ -290,7 +253,7 @@ public class SimpleClearCaseSCM extends SCM {
             }
 
             Launcher launcher = Hudson.getInstance().createLauncher(TaskListener.NULL);
-            ClearTool ct = new ClearTool(launcher, null, null, value, null, false);
+            ClearTool ct = new ClearTool(launcher, null, null, value);
 
             if (ct.doesViewExist(value) == false) {
                 return FormValidation.error(Messages.simpleclearcase_viewname_doesntexist());
@@ -301,10 +264,13 @@ public class SimpleClearCaseSCM extends SCM {
         public FormValidation doCheckLoadRules(@QueryParameter String value,
                                                @QueryParameter("viewname") String viewname)
                                                                 throws InterruptedException, IOException {
-            if (isNullOrEmpty(value)) {
+            if (value == null || value.trim().isEmpty() == true) {
                 return FormValidation.error(Messages.simpleclearcase_loadRules_empty());
             }
 
+            if (value.contains(" ") == true) {
+                return FormValidation.error(Messages.simpleclearcase_loadRules_whitespace());
+            }
             // remove duplications and check if sizes differ
             List<String> splittedRules = splitLoadRules(value);
             Set<String> uniqueSet = new HashSet<String>(splittedRules);
@@ -336,7 +302,7 @@ public class SimpleClearCaseSCM extends SCM {
             
             // check if paths actually exists, as its the heaviest task its last
             Launcher launcher = Hudson.getInstance().createLauncher(TaskListener.NULL);
-            ClearTool ct = new ClearTool(launcher, null, null, viewname, null, false);
+            ClearTool ct = new ClearTool(launcher, null, null, viewname);
 
             for (String lr : splittedRules) {
                 if (ct.doesClearCasePathExist(lr) == false) {
@@ -344,48 +310,6 @@ public class SimpleClearCaseSCM extends SCM {
                 }
             }
             return FormValidation.ok();
-        }
-        
-        public FormValidation doCheckBranch(@QueryParameter String value,
-                                            @QueryParameter("viewname") String viewname,
-                                            @QueryParameter("loadRules") String loadRules)
-                                                                throws InterruptedException, IOException {
-           
-            // Cannot validate branch if viewname and loadRules is empty 
-            if (isNullOrEmpty(viewname, loadRules)) {
-                return FormValidation.error(Messages.simpleclearcase_branch_requirements());
-            }
-            
-            if (isNullOrEmpty(value)) {
-                return FormValidation.ok();
-            }
-
-            if (value.contains(" ") == true) {
-                return FormValidation.error(Messages.simpleclearcase_branch_whitespace());
-            }
-
-            Launcher launcher = Hudson.getInstance().createLauncher(TaskListener.NULL);
-            // creating a CT with viewname, and value as branch
-            ClearTool ct = new ClearTool(launcher, null, null, viewname, value, false);
-            
-            // check to see if ClearTool returns any error on
-            for (String lr : splitLoadRules(loadRules)) {
-                if (ct.doesClearCaseBranchExist(lr) == false) {
-                    return FormValidation.error(Messages.simpleclearcase_branch_missingbranchforpath() + lr);
-                }
-            }
-
-            return FormValidation.ok();   
-        }
-        
-        // returns true if any of the strings are null or empty
-        private boolean isNullOrEmpty(String... values) {
-            for (String s : values) {
-                if (s == null || s.trim().isEmpty()) {
-                    return true;
-                }
-            }
-            return false;
         }
     }
 }

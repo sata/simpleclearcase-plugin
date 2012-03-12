@@ -44,9 +44,8 @@ public class SimpleClearCaseRevisionState extends SCMRevisionState implements Ac
         this.buildNumber = buildNumber;
     }
 
-    public SimpleClearCaseRevisionState(int buildNumber) {
-        this.map = new LoadRuleDateMap();
-        this.buildNumber = buildNumber;
+    public SimpleClearCaseRevisionState() {
+        map = new LoadRuleDateMap();
     }
 
     public Date getBuiltTime(String loadRule) {

@@ -27,17 +27,8 @@
     <f:expandableTextbox />
   </f:entry>
   
-  <f:entry title="viewname" field="viewname">
+<f:entry title="viewname" field="viewname">
     <f:textbox />
   </f:entry>
-
-  <f:entry title="Branch name to watch" field="branch">
-     <f:textbox />
- </f:entry>  
- 
-  <f:entry title="Filter Branch creation/deletion" field="filter">
-    <f:checkbox checked="${filter}"/>
-  </f:entry>  
-</j:jelly>
-
   
+</j:jelly>

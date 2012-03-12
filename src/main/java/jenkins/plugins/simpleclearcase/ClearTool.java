@@ -67,23 +67,32 @@ public class ClearTool {
     private static final String PARAM_RECURSE = "-recurse";
     private static final String PARAM_LAST    = "-last";
     private static final String PARAM_EXEC    = "-exec";
+    private static final String PARAM_BRANCH  = "-branch";
 
     private static final String LSHISTORY_ENTRY_DATE_FORMAT = "yyyyMMdd.HHmmss";
     private static final String SINCE_DATE_FORMAT           = "d-MMM-yy.HH:mm:ss'UTC'Z";
 
+    private static final String FILTER_MKBRANCH = "mkbranch";
+    private static final String FILTER_RMBRANCH = "rmbranch";
+    
     private Launcher     launcher;
     private TaskListener listener;
     private FilePath     workspace;
     private String       viewname;
+    private String       branch;
+    private boolean      filter;
 
     public ClearTool(Launcher launcher, TaskListener listener, FilePath workspace, 
-                                          String viewname) throws InterruptedException, IOException {
+                                          String viewname, String branch, 
+                                          boolean filter) throws InterruptedException, IOException {
         this.launcher  = launcher;
         this.listener  = listener;
         this.workspace = workspace;
-        this.viewname  = viewname.trim();
+        this.viewname  = viewname;
+        this.branch = branch;
+        this.filter = filter;
     }
-
+    
     /**
      * @param viewTag
      * @return
@@ -105,7 +114,7 @@ public class ClearTool {
 
     public boolean doesClearCasePathExist(String path) throws InterruptedException {
         ArgumentListBuilder cmd = new ArgumentListBuilder();
-
+        
         cmd.add(DESCRIBE);
         cmd.add(path);
 
@@ -119,6 +128,18 @@ public class ClearTool {
         return true;
     }
 
+    public boolean doesClearCaseBranchExist(String path) throws InterruptedException{
+
+        try {
+            lshistory(path, null);
+        } catch (IOException e) {
+            // under the assumption that the path is correct
+            // this error would indicate branch doesn't exist
+            return false;
+        }
+        return true;
+    }
+    
     /**
      * @param loadRules the paths where to fetch commit dates from
      * @return the latest commit date for each load rule
@@ -247,6 +268,10 @@ public class ClearTool {
 
         cmd.add(LSHISTORY);
         
+        if (branch != null && branch.trim().isEmpty() == false) {
+            cmd.add(PARAM_BRANCH, branch);
+        }
+        
         if (since != null) {
             cmd.add(PARAM_RECURSE);
             // if the date is null, there is no time bound on lshistory            
@@ -358,9 +383,7 @@ public class ClearTool {
         if (ret != 0) {
             String errMsg = String.format("ClearTool: Exit code wasn't ok, "
                                         + "code: %d. Tried to execute: %s", ret, cmd.toStringWithQuote());
-            if (listener != null) {
-                DebugHelper.error(listener, errMsg);
-            }
+            DebugHelper.error(listener, errMsg);
 
             if (out != null) {
                 out.flush();
@@ -401,6 +424,13 @@ public class ClearTool {
         // if there isn't a comment we have an element less
         String comment          = (splitted.length > 6) ? splitted[6] : ""; 
 
+        // we filter away events that consist of creation and deletion of branches
+        // if filter is true
+        if (filter == true && 
+                (operation.equals(FILTER_MKBRANCH) || operation.equals(FILTER_RMBRANCH))) {
+            return null;
+        }
+        
         // the constructor of ChangeLogEntry follows LSHISTORY_FORMATTING
         // parameter order
         return new SimpleClearCaseChangeLogEntry(entryDate, user, path, version, eventDescription, 

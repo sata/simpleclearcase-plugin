@@ -21,23 +21,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
 -->
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
 
-  <f:entry title="Load rules" field="loadRules">
-    <f:expandableTextbox />
-  </f:entry>
-  
-  <f:entry title="viewname" field="viewname">
-    <f:textbox />
-  </f:entry>
-
-  <f:entry title="Branch name to watch" field="branch">
-     <f:textbox />
- </f:entry>  
- 
-  <f:entry title="Filter Branch creation/deletion" field="filter">
-    <f:checkbox checked="${filter}"/>
-  </f:entry>  
-</j:jelly>
-
-  
+<div>
+	Filters out mkbranch and rmbranch messages in lshistory. These changes isn't
+	relevant if you are tracking source files in a specific branch.
+</div>

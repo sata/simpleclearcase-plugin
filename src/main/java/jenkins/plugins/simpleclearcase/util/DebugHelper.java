@@ -35,7 +35,9 @@ public class DebugHelper {
      * @param args is an object array of arguments which has it's place in formatted string
      */
     public static void error(TaskListener listener, String format, Object... args) {
-        listener.error(format + "%n", args);
+        if (listener != null) {
+            listener.error(format + "%n", args);
+        }
     }
 
     /**
@@ -43,7 +45,9 @@ public class DebugHelper {
      * @param msg
      */
     public static void fatalError(TaskListener listener, String msg) {
-        listener.fatalError(msg);
+        if (listener != null) {
+            listener.fatalError(msg);
+        }
     }
 
     /**
@@ -51,7 +55,9 @@ public class DebugHelper {
      * @param msg
      */
     public static void error(TaskListener listener, String msg) {
-        listener.error(msg);
+        if (listener != null) {
+            listener.error(msg);
+        }
     }
 
     /**

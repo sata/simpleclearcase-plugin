@@ -70,8 +70,15 @@ public class LoadRuleDateMap {
 	        
 			//fetch the date for the specific load rule
 			Date compareDate = compare.getBuiltTime(entry.getKey());
-
-			//compare the entries date for the load rule against the comparisons date
+			
+			// if our date is null, but compare isn't then we return true
+			// since it would indicate that remote has something of value, compared
+			// to nothing, which is in our set.
+			if (entry.getValue() == null && compareDate != null) {
+			    return true;
+			}
+			
+			// compare the entries date for the load rule against the comparisons date
 			if (compareDate != null && entry.getValue().before(compareDate)) {
 				return true;
 			}

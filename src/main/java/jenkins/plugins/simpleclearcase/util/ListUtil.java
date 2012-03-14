@@ -22,7 +22,11 @@ public class ListUtil {
         List<SimpleClearCaseChangeLogEntry> entriesToRemove = new ArrayList<SimpleClearCaseChangeLogEntry>();
 
         for (SimpleClearCaseChangeLogEntry entry : entries) {
-
+            if (entry.getDate() == null) {
+                // unset date means there isn't any duplication
+                continue;
+            }
+            
             //for each entry we have to compare against each load rule
             for (String loadRule : loadRules) {
                 if (entry.containsPathWithPrefix(loadRule) && 
